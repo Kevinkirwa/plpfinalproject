@@ -5,9 +5,10 @@ import { server } from "../../server";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
-const OTPVerification = ({ userId, email }) => {
+const OTPVerification = ({ email }) => {
   const [otp, setOtp] = useState("");
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,25 +22,33 @@ const OTPVerification = ({ userId, email }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const response = await axios.post(`${server}/user/verify-otp`, {
-        userId,
+        email,
         otp: parseInt(otp),
       });
       toast.success("Account verified successfully!");
       navigate("/login");
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Verification failed. Please try again.");
+      console.error("Verification error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleResendOTP = async () => {
+    setLoading(true);
     try {
-      await axios.post(`${server}/user/resend-otp`, { userId });
+      await axios.post(`${server}/user/resend-otp`, { email });
       setTimeLeft(600);
       toast.success("New verification code sent to your email!");
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Failed to resend code. Please try again.");
+      console.error("Resend OTP error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -84,9 +93,10 @@ const OTPVerification = ({ userId, email }) => {
                 <button
                   type="button"
                   onClick={handleResendOTP}
-                  className="font-medium text-blue-600 hover:text-blue-500"
+                  disabled={loading}
+                  className="font-medium text-blue-600 hover:text-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Resend code
+                  {loading ? "Sending..." : "Resend code"}
                 </button>
               )}
             </div>
@@ -94,9 +104,10 @@ const OTPVerification = ({ userId, email }) => {
             <div>
               <button
                 type="submit"
-                className="group relative w-full h-[40px] flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                disabled={loading}
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Verify
+                {loading ? "Verifying..." : "Verify"}
               </button>
             </div>
           </form>

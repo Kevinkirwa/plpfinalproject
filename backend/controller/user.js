@@ -1,7 +1,6 @@
 const express = require("express");
 const User = require("../model/user");
 const router = express.Router();
-const cloudinary = require("cloudinary");
 const ErrorHandler = require("../utils/ErrorHandler");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const jwt = require("jsonwebtoken");
@@ -12,16 +11,12 @@ const { isAuthenticated, isAdmin } = require("../middleware/auth");
 // create user
 router.post("/create-user", async (req, res, next) => {
   try {
-    const { name, email, password, avatar } = req.body;
+    const { name, email, password } = req.body;
     const userEmail = await User.findOne({ email });
 
     if (userEmail) {
       return next(new ErrorHandler("User already exists", 400));
     }
-
-    const myCloud = await cloudinary.v2.uploader.upload(avatar, {
-      folder: "avatars",
-    });
 
     // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000);
@@ -32,8 +27,8 @@ router.post("/create-user", async (req, res, next) => {
       email: email,
       password: password,
       avatar: {
-        public_id: myCloud.public_id,
-        url: myCloud.secure_url,
+        public_id: "default",
+        url: "https://res.cloudinary.com/demo/image/upload/v1/default-avatar.png"
       },
       otp: otp,
       otpExpiry: otpExpiry,
@@ -48,16 +43,22 @@ router.post("/create-user", async (req, res, next) => {
       await sendMail({
         email: user.email,
         subject: "Verify your account",
-        message: `Hello ${user.name}, your verification code is: ${otp}. This code will expire in 10 minutes.`,
-      });
-      res.status(201).json({
-        success: true,
-        message: `Please check your email for the verification code!`,
-        userId: newUser._id
+        html: `Your verification code is: ${otp}. This code will expire in 10 minutes.`
       });
     } catch (error) {
-      return next(new ErrorHandler(error.message, 500));
+      console.error("Error sending email:", error);
+      return next(new ErrorHandler("Error sending verification email", 500));
     }
+
+    res.status(201).json({
+      success: true,
+      message: "Please check your email to verify your account",
+      user: {
+        name: newUser.name,
+        email: newUser.email,
+        isVerified: newUser.isVerified
+      }
+    });
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
   }
@@ -166,7 +167,7 @@ router.post(
       await sendMail({
         email: user.email,
         subject: "Verify your account",
-        message: `Hello ${user.name}, your new verification code is: ${otp}. This code will expire in 10 minutes.`,
+        html: `Your new verification code is: ${otp}. This code will expire in 10 minutes.`
       });
 
       res.status(200).json({

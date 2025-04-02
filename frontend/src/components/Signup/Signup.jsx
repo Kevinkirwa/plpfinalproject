@@ -13,42 +13,32 @@ const Signup = () => {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [visible, setVisible] = useState(false);
-  const [avatar, setAvatar] = useState(null);
   const [showOTPVerification, setShowOTPVerification] = useState(false);
-  const [userId, setUserId] = useState(null);
-
-  const handleFileInputChange = (e) => {
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      if (reader.readyState === 2) {
-        setAvatar(reader.result);
-      }
-    };
-
-    reader.readAsDataURL(e.target.files[0]);
-  };
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
       const response = await axios.post(`${server}/user/create-user`, {
         name,
         email,
         password,
-        avatar,
       });
+      
       toast.success(response.data.message);
-      setUserId(response.data.userId);
       setShowOTPVerification(true);
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Registration failed. Please try again.");
+      console.error("Registration error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   if (showOTPVerification) {
-    return <OTPVerification userId={userId} email={email} />;
+    return <OTPVerification email={email} />;
   }
 
   return (
@@ -63,7 +53,7 @@ const Signup = () => {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label
-                htmlFor="email"
+                htmlFor="name"
                 className="block text-sm font-medium text-gray-700"
               >
                 Full Name
@@ -71,7 +61,7 @@ const Signup = () => {
               <div className="mt-1">
                 <input
                   type="text"
-                  name="text"
+                  name="name"
                   autoComplete="name"
                   required
                   value={name}
@@ -135,54 +125,35 @@ const Signup = () => {
             </div>
 
             <div>
-              <label
-                htmlFor="avatar"
-                className="block text-sm font-medium text-gray-700"
-              ></label>
-              <div className="mt-2 flex items-center">
-                <span className="inline-block h-8 w-8 rounded-full overflow-hidden">
-                  {avatar ? (
-                    <img
-                      src={avatar}
-                      alt="avatar"
-                      className="h-full w-full object-cover rounded-full"
-                    />
-                  ) : (
-                    <RxAvatar className="h-8 w-8" />
-                  )}
-                </span>
-                <label
-                  htmlFor="file-input"
-                  className="ml-5 flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  <span>Upload a file</span>
-                  <input
-                    type="file"
-                    name="avatar"
-                    id="file-input"
-                    accept=".jpg,.jpeg,.png"
-                    onChange={handleFileInputChange}
-                    className="sr-only"
-                  />
-                </label>
+              <button
+                type="submit"
+                disabled={loading}
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? "Registering..." : "Register"}
+              </button>
+            </div>
+          </form>
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Already have an account?</span>
               </div>
             </div>
 
-            <div>
-              <button
-                type="submit"
-                className="group relative w-full h-[40px] flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            <div className="mt-6">
+              <Link
+                to="/login"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-blue-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                Submit
-              </button>
-            </div>
-            <div className={`${styles.noramlFlex} w-full`}>
-              <h4>Already have an account?</h4>
-              <Link to="/login" className="text-blue-600 pl-2">
-                Sign In
+                Sign in
               </Link>
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </div>
