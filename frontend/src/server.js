@@ -1,9 +1,9 @@
 export const server = process.env.NODE_ENV === 'production'
-  ? process.env.REACT_APP_API_URL
-  : 'http://localhost:8000';
+  ? 'https://plpfinalproject-2.onrender.com/api/v2'
+  : 'http://localhost:8000/api/v2';
 
 export const socket_server = process.env.NODE_ENV === 'production'
-  ? process.env.REACT_APP_SOCKET_SERVER
+  ? 'wss://plpfinalproject-2.onrender.com/'
   : 'ws://localhost:8000';
 
 
