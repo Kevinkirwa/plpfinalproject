@@ -1,15 +1,16 @@
 import axios from 'axios';
 
-export const server = process.env.NODE_ENV === 'production'
-  ? 'https://plpfinalproject-2.onrender.com/api/v2'
-  : 'http://localhost:8000/api/v2';
+const BACKEND_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
-export const socket_server = process.env.NODE_ENV === 'production'
-  ? 'wss://plpfinalproject-2.onrender.com/'
-  : 'ws://localhost:8000';
+const server = axios.create({
+  baseURL: `${BACKEND_URL}/api/v2`,
+  withCredentials: true,
+});
 
-// Add axios default configuration
-axios.defaults.withCredentials = true;
+// Use the same backend URL for WebSocket, just change the protocol
+export const socketServer = BACKEND_URL.replace(/^http/, 'ws');
+
+export default server;
 
 // Add request interceptor to handle CORS and credentials
 axios.interceptors.request.use((config) => {
