@@ -6,7 +6,6 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
 const connectDatabase = require("./db/Database");
-const cloudinary = require("cloudinary");
 const http = require("http");
 const { Server } = require("socket.io");
 
@@ -32,8 +31,26 @@ app.use(
   })
 );
 app.use("/", express.static(path.join(__dirname, "./uploads")));
-app.use("/test", (req, res) => {
-  res.send("Hello world!");
+
+// Root route handler
+app.get("/", (req, res) => {
+  res.json({
+    message: "Welcome to PLP Final Project API",
+    status: "Server is running",
+    endpoints: {
+      user: "/api/v2/user",
+      shop: "/api/v2/shop",
+      product: "/api/v2/product",
+      event: "/api/v2/event",
+      order: "/api/v2/order",
+      payment: "/api/v2/payment"
+    }
+  });
+});
+
+// Test route
+app.get("/test", (req, res) => {
+  res.json({ message: "API is working!" });
 });
 
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
@@ -47,12 +64,6 @@ if (process.env.NODE_ENV !== "PRODUCTION") {
 
 // connect db
 connectDatabase();
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-})
 
 // create server
 const server = http.createServer(app);
