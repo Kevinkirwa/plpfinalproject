@@ -1,7 +1,7 @@
 import React from "react";
 import Footer from "../components/Layout/Footer";
 import Header from "../components/Layout/Header";
-import Lottie from "react-lottie";
+import Lottie from "lottie-react";
 import animationData from "../Assests/animations/107043-success.json";
 
 const OrderSuccessPage = () => {
@@ -15,22 +15,28 @@ const OrderSuccessPage = () => {
 };
 
 const Success = () => {
-  const defaultOptions = {
-    loop: false,
-    autoplay: true,
-    animationData: animationData,
-    rendererSettings: {
-      preserveAspectRatio: "xMidYMid slice",
-    },
-  };
+  if (!animationData) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
+        <h5 className="text-center mt-4 text-[25px] text-[#000000a1]">
+          Your order is successful 😍
+        </h5>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <Lottie options={defaultOptions} width={300} height={300} />
-      <h5 className="text-center mb-14 text-[25px] text-[#000000a1]">
+    <div className="flex flex-col items-center justify-center min-h-[60vh]">
+      <Lottie 
+        animationData={animationData} 
+        loop={false}
+        style={{ width: 300, height: 300 }}
+        autoplay={true}
+      />
+      <h5 className="text-center mt-4 text-[25px] text-[#000000a1]">
         Your order is successful 😍
       </h5>
-      <br />
-      <br />
     </div>
   );
 };
