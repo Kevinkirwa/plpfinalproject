@@ -5,53 +5,78 @@ const router = express.Router();
 const Product = require("../model/product");
 const Order = require("../model/order");
 const Shop = require("../model/shop");
-const cloudinary = require("cloudinary");
 const ErrorHandler = require("../utils/ErrorHandler");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+
+// Configure multer for file upload
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const dir = 'uploads/products';
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Not an image! Please upload only images.'), false);
+    }
+  }
+});
 
 // create product
 router.post(
   "/create-product",
+  upload.array('images', 5),
   catchAsyncErrors(async (req, res, next) => {
     try {
       const shopId = req.body.shopId;
       const shop = await Shop.findById(shopId);
       if (!shop) {
+        // Delete uploaded files if shop validation fails
+        if (req.files) {
+          req.files.forEach(file => {
+            fs.unlinkSync(file.path);
+          });
+        }
         return next(new ErrorHandler("Shop Id is invalid!", 400));
-      } else {
-        let images = [];
+      }
 
-        if (typeof req.body.images === "string") {
-          images.push(req.body.images);
-        } else {
-          images = req.body.images;
-        }
-      
-        const imagesLinks = [];
-      
-        for (let i = 0; i < images.length; i++) {
-          const result = await cloudinary.v2.uploader.upload(images[i], {
-            folder: "products",
-          });
-      
-          imagesLinks.push({
-            public_id: result.public_id,
-            url: result.secure_url,
-          });
-        }
-      
-        const productData = req.body;
-        productData.images = imagesLinks;
-        productData.shop = shop;
+      const imagesLinks = req.files.map(file => ({
+        url: `${process.env.BACKEND_URL}/${file.path}`
+      }));
 
-        const product = await Product.create(productData);
+      const productData = req.body;
+      productData.images = imagesLinks;
+      productData.shop = shop;
 
-        res.status(201).json({
-          success: true,
-          product,
+      const product = await Product.create(productData);
+
+      res.status(201).json({
+        success: true,
+        product,
+      });
+    } catch (error) {
+      // Delete uploaded files if there's an error
+      if (req.files) {
+        req.files.forEach(file => {
+          fs.unlinkSync(file.path);
         });
       }
-    } catch (error) {
-      return next(new ErrorHandler(error, 400));
+      return next(new ErrorHandler(error.message, 400));
     }
   })
 );
@@ -85,11 +110,13 @@ router.delete(
         return next(new ErrorHandler("Product is not found with this id", 404));
       }    
 
-      for (let i = 0; 1 < product.images.length; i++) {
-        const result = await cloudinary.v2.uploader.destroy(
-          product.images[i].public_id
-        );
-      }
+      // Delete product images from storage
+      product.images.forEach(image => {
+        const filePath = image.url.replace(`${process.env.BACKEND_URL}/`, '');
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      });
     
       await product.remove();
 
@@ -98,7 +125,7 @@ router.delete(
         message: "Product Deleted successfully!",
       });
     } catch (error) {
-      return next(new ErrorHandler(error, 400));
+      return next(new ErrorHandler(error.message, 400));
     }
   })
 );
