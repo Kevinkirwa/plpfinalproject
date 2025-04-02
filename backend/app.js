@@ -6,6 +6,7 @@ const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const path = require("path");
 const errorMiddleware = require("./middleware/error");
+const cloudinary = require("cloudinary").v2;
 
 // config
 if (process.env.NODE_ENV !== "PRODUCTION") {
@@ -13,6 +14,13 @@ if (process.env.NODE_ENV !== "PRODUCTION") {
     path: "config/.env",
   });
 }
+
+// Cloudinary config
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 // Log environment variables (without sensitive data)
 console.log('Environment:', {
