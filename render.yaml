@@ -2,11 +2,15 @@ services:
   - type: web
     name: plpfinalproject-backend
     env: node
-    buildCommand: cd backend && npm install
-    startCommand: cd backend && npm start
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 8000
-    healthCheckPath: /api/v2/user/test 
+      - key: FRONTEND_URL
+        value: https://plpfinalproject.vercel.app
+    healthCheckPath: /api/v2/test
+    branch: main 

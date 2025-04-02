@@ -2,12 +2,14 @@
   "buildCommand": "npm run build",
   "outputDirectory": "build",
   "framework": "create-react-app",
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/[^.]+", "dest": "/" }
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ],
   "env": {
-    "REACT_APP_API_URL": "https://your-app-backend.onrender.com",
-    "REACT_APP_SOCKET_SERVER": "wss://your-app-backend.onrender.com"
+    "REACT_APP_API_URL": "https://plpfinalproject-backend.onrender.com",
+    "REACT_APP_SOCKET_SERVER": "wss://plpfinalproject-backend.onrender.com"
   }
 } 
