@@ -7,7 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addTocart, removeFromCart } from "../../redux/actions/cart";
 import { toast } from "react-toastify";
-import { Button } from "@material-ui/core";
+import { Button } from "@mui/material";
 import { AiOutlineArrowRight, AiOutlineDelete, AiOutlineShoppingCart } from "react-icons/ai";
 
 const Cart = ({ setOpenCart }) => {
