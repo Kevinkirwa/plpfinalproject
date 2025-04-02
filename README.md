@@ -2,6 +2,11 @@
 
 A full-stack e-commerce platform built with the MERN stack (MongoDB, Express.js, React.js, Node.js).
 
+## Live Demo
+
+- Frontend: [https://plpfinalproject.vercel.app](https://plpfinalproject.vercel.app)
+- Backend API: [https://plpfinalproject-2.onrender.com](https://plpfinalproject-2.onrender.com)
+
 ## Project Structure
 
 ```
