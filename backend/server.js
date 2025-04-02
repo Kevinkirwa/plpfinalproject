@@ -26,7 +26,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: process.env.NODE_ENV === "production" 
-      ? [process.env.FRONTEND_URL, "https://your-app-frontend.vercel.app"]
+      ? ["https://plpfinalproject.vercel.app"]
       : "http://localhost:3000",
     credentials: true,
   })
@@ -58,7 +58,9 @@ cloudinary.config({
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: process.env.NODE_ENV === "production" 
+      ? "https://plpfinalproject.vercel.app"
+      : "http://localhost:3000",
     methods: ["GET", "POST"],
     credentials: true
   }
