@@ -1,30 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { RxCross1 } from "react-icons/rx";
 import { IoBagHandleOutline } from "react-icons/io5";
 import { HiOutlineMinus, HiPlus } from "react-icons/hi";
 import styles from "../../styles/styles";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addTocart, removeFromCart } from "../../redux/actions/cart";
 import { toast } from "react-toastify";
+import { Button } from "@material-ui/core";
+import { AiOutlineArrowRight, AiOutlineDelete, AiOutlineShoppingCart } from "react-icons/ai";
 
 const Cart = ({ setOpenCart }) => {
   const { cart } = useSelector((state) => state.cart);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [totalPrice, setTotalPrice] = useState(0);
+
+  useEffect(() => {
+    let total = 0;
+    cart.forEach((item) => {
+      total += item.discountPrice * item.qty;
+    });
+    setTotalPrice(total);
+  }, [cart]);
 
   const removeFromCartHandler = (data) => {
     if (!data) return;
     dispatch(removeFromCart(data));
+    toast.success("Item removed from cart!");
   };
-
-  const totalPrice = cart?.reduce(
-    (acc, item) => acc + (item?.qty || 0) * (item?.discountPrice || 0),
-    0
-  ) || 0;
 
   const quantityChangeHandler = (data) => {
     if (!data) return;
     dispatch(addTocart(data));
+  };
+
+  const checkoutHandler = () => {
+    if (cart.length === 0) {
+      toast.error("Your cart is empty!");
+      return;
+    }
+    navigate("/checkout");
   };
 
   return (
@@ -82,13 +98,24 @@ const Cart = ({ setOpenCart }) => {
                 <span className="text-base">Subtotal:</span>
                 <span className="text-lg font-semibold">KES {totalPrice.toLocaleString()}</span>
               </div>
-              <Link to="/checkout">
-                <div className="h-[45px] flex items-center justify-center w-[100%] bg-black hover:bg-gray-900 transition-colors duration-200 rounded-md">
-                  <h1 className="text-white text-[18px] font-[600]">
-                    Checkout Now • KES {totalPrice.toLocaleString()}
-                  </h1>
-                </div>
-              </Link>
+              <div className="flex space-x-4">
+                <Link to="/products">
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    startIcon={<AiOutlineArrowRight />}
+                  >
+                    Continue Shopping
+                  </Button>
+                </Link>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={checkoutHandler}
+                >
+                  Checkout
+                </Button>
+              </div>
             </div>
           </>
         )}
@@ -150,7 +177,7 @@ const CartSingle = ({ data, quantityChangeHandler, removeFromCartHandler }) => {
               className="text-red-500 hover:text-red-700 p-1"
               onClick={() => removeFromCartHandler(data)}
             >
-              <RxCross1 size={20} />
+              <AiOutlineDelete size={20} />
             </button>
           </div>
 
