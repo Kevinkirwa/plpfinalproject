@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: plpfinalproject-backend
+    env: node
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8000
+    healthCheckPath: /api/v2/user/test 

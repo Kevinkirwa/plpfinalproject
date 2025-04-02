@@ -198,7 +198,7 @@ The application is fully responsive and works on:
 This project is licensed under the ISC License.
 
 ## 👥 Authors
-- Shahriar Sajeeb - Initial work
+- kevin kirwa - Initial work
 
 ## 🙏 Acknowledgments
 - Material-UI for the component library

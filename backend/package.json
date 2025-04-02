@@ -1,7 +1,7 @@
 {
-  "name": "e-shop-tutorial",
+  "name": "plpfinalproject-backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend for PLP Final Project",
   "main": "server.js",
   "engines": {
     "node": "18.x"
@@ -10,7 +10,7 @@
     "dev": "nodemon server.js",
     "start": "node server.js"
   },
-  "author": "shahriar Sajeeb",
+  "author": "Kevin Kirwa",
   "license": "ISC",
   "dependencies": {
     "axios": "^1.6.7",

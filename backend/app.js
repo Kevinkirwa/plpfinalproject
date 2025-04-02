@@ -28,13 +28,30 @@ console.log('Environment:', {
 app.use(express.json());
 app.use(cookieParser());
 
-// Update CORS configuration
-app.use(cors({
-  origin: "http://localhost:3000",
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
-}));
+// CORS configuration
+app.use(
+  cors({
+    origin: process.env.NODE_ENV === "production"
+      ? [process.env.FRONTEND_URL]
+      : "http://localhost:3000",
+    credentials: true,
+  })
+);
+
+// Security headers
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Origin", process.env.FRONTEND_URL);
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET,OPTIONS,PATCH,DELETE,POST,PUT"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization"
+  );
+  next();
+});
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
