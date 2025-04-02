@@ -58,20 +58,38 @@ import { getAllProducts } from "./redux/actions/product";
 import { getAllEvents } from "./redux/actions/event";
 import axios from "axios";
 import { server } from "./server";
-import ChatAssistant from "./components/ChatAssistant/ChatAssistant";
-import ContactPage from "./pages/ContactPage";
-import AboutUs from "./pages/AboutUs";
-import Careers from "./pages/Careers";
-import StoreLocations from "./pages/StoreLocations";
-import Blog from "./pages/Blog";
+import Loader from "./components/Layout/Loader";
 
 const App = () => {
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    Store.dispatch(loadUser());
-    Store.dispatch(loadSeller());
-    Store.dispatch(getAllProducts());
-    Store.dispatch(getAllEvents());
+    const initializeApp = async () => {
+      try {
+        setIsLoading(true);
+        await Promise.all([
+          Store.dispatch(loadUser()),
+          Store.dispatch(loadSeller()),
+          Store.dispatch(getAllProducts()),
+          Store.dispatch(getAllEvents())
+        ]);
+      } catch (error) {
+        console.error("Error initializing app:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeApp();
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader />
+      </div>
+    );
+  }
 
   return (
     <BrowserRouter>
@@ -104,11 +122,7 @@ const App = () => {
             <Route path="/inbox" element={<UserInbox />} />
             <Route path="/shop-create" element={<ShopCreatePage />} />
             <Route path="/shop-login" element={<ShopLoginPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/about" element={<AboutUs />} />
-            <Route path="/careers" element={<Careers />} />
-            <Route path="/locations" element={<StoreLocations />} />
-            <Route path="/blog" element={<Blog />} />
+            <Route path="/shop/:id" element={<ShopHomePage />} />
 
             {/* Protected Routes */}
             <Route
@@ -129,9 +143,6 @@ const App = () => {
             />
 
             {/* Shop Routes */}
-            <Route path="/shop/:id" element={<ShopHomePage />} />
-            
-            {/* Seller Routes */}
             <Route
               path="/dashboard"
               element={
@@ -296,7 +307,6 @@ const App = () => {
             />
           </Routes>
         </div>
-        <ChatAssistant />
         <ToastContainer
           position="bottom-center"
           autoClose={5000}

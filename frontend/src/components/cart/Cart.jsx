@@ -98,9 +98,10 @@ const Cart = ({ setOpenCart }) => {
 };
 
 const CartSingle = ({ data, quantityChangeHandler, removeFromCartHandler }) => {
+  const [value, setValue] = useState(data?.qty || 1);
+  
   if (!data) return null;
   
-  const [value, setValue] = useState(data.qty || 1);
   const totalPrice = (data.discountPrice || 0) * value;
 
   const increment = (data) => {
@@ -153,19 +154,19 @@ const CartSingle = ({ data, quantityChangeHandler, removeFromCartHandler }) => {
             </button>
           </div>
 
-          <div className="flex items-center gap-2 mt-3">
+          <div className="flex items-center gap-2 mt-2">
             <button
-              className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+              className="p-1 rounded-full hover:bg-gray-100 transition-colors duration-200"
               onClick={() => decrement(data)}
             >
-              <HiOutlineMinus size={16} />
+              <HiOutlineMinus size={20} />
             </button>
             <span className="w-8 text-center">{value}</span>
             <button
-              className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+              className="p-1 rounded-full hover:bg-gray-100 transition-colors duration-200"
               onClick={() => increment(data)}
             >
-              <HiPlus size={16} />
+              <HiPlus size={20} />
             </button>
           </div>
         </div>
