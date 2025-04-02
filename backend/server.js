@@ -20,16 +20,22 @@ require("dotenv").config({
   path: ".env",
 });
 
+// Middleware
 app.use(express.json());
 app.use(cookieParser());
+app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
+
+// CORS configuration
 app.use(
   cors({
-    origin: process.env.NODE_ENV === "production" 
-      ? ["https://plpfinalproject.vercel.app"]
-      : "http://localhost:3000",
+    origin: ["https://plpfinalproject.vercel.app", "http://localhost:3000"],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
   })
 );
+
+// Static files
 app.use("/", express.static(path.join(__dirname, "./uploads")));
 
 // Root route handler
@@ -53,15 +59,6 @@ app.get("/test", (req, res) => {
   res.json({ message: "API is working!" });
 });
 
-app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
-
-// config
-if (process.env.NODE_ENV !== "PRODUCTION") {
-  require("dotenv").config({
-    path: ".env",
-  });
-}
-
 // connect db
 connectDatabase();
 
@@ -69,9 +66,7 @@ connectDatabase();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.NODE_ENV === "production" 
-      ? "https://plpfinalproject.vercel.app"
-      : "http://localhost:3000",
+    origin: ["https://plpfinalproject.vercel.app", "http://localhost:3000"],
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -85,19 +80,13 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(process.env.PORT, () => {
-  console.log(
-    `Server is running on http://localhost:${process.env.PORT}`
-  );
-});
-
-// unhandled promise rejection
-process.on("unhandledRejection", (err) => {
-  console.log(`Shutting down the server for ${err.message}`);
-  console.log(`shutting down the server for unhandle promise rejection`);
-
-  server.close(() => {
-    process.exit(1);
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: "Internal Server Error",
+    error: process.env.NODE_ENV === "development" ? err.message : undefined
   });
 });
 
@@ -113,6 +102,7 @@ const conversation = require("./controller/conversation");
 const message = require("./controller/message");
 const withdraw = require("./controller/withdraw");
 
+// API routes
 app.use("/api/v2/user", user);
 app.use("/api/v2/conversation", conversation);
 app.use("/api/v2/message", message);
@@ -127,28 +117,19 @@ app.use("/api/v2/withdraw", withdraw);
 // For error handling
 app.use(ErrorHandler);
 
-// Handle production deployment
-if (process.env.NODE_ENV === "production") {
-  // Security headers
-  app.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Origin", process.env.FRONTEND_URL);
-    res.setHeader(
-      "Access-Control-Allow-Methods",
-      "GET,OPTIONS,PATCH,DELETE,POST,PUT"
-    );
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
-    );
-    next();
-  });
+const PORT = process.env.PORT || 8000;
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
 
-  // Error handling for production
-  app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
+// unhandled promise rejection
+process.on("unhandledRejection", (err) => {
+  console.log(`Shutting down the server for ${err.message}`);
+  console.log(`shutting down the server for unhandle promise rejection`);
+
+  server.close(() => {
+    process.exit(1);
   });
-}
+});
 
 module.exports = app;

@@ -21,17 +21,35 @@ const Signup = () => {
     setLoading(true);
 
     try {
+      console.log("Attempting to create user with:", { name, email });
       const response = await axios.post(`${server}/user/create-user`, {
         name,
         email,
         password,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true
       });
       
+      console.log("Registration response:", response.data);
       toast.success(response.data.message);
       setShowOTPVerification(true);
     } catch (error) {
-      toast.error(error.response?.data?.message || "Registration failed. Please try again.");
-      console.error("Registration error:", error);
+      console.error("Registration error details:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else if (error.message === "Network Error") {
+        toast.error("Unable to connect to server. Please check your internet connection.");
+      } else {
+        toast.error("Registration failed. Please try again later.");
+      }
     } finally {
       setLoading(false);
     }
