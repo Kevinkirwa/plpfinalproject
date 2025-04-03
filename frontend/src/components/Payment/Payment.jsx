@@ -4,7 +4,7 @@ import styles from "../../styles/styles";
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import axios from "axios";
-import { server } from "../../server";
+import server from "../../server";
 import { toast } from "react-toastify";
 import { FaMobileAlt } from "react-icons/fa";
 

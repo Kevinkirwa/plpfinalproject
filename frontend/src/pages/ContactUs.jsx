@@ -3,7 +3,7 @@ import Header from "../components/Layout/Header";
 import Footer from "../components/Layout/Footer";
 import { toast } from "react-toastify";
 import axios from "axios";
-import { server } from "../server";
+import server from "../server";
 
 const ContactUs = () => {
   const [formData, setFormData] = useState({

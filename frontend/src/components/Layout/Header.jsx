@@ -18,7 +18,7 @@ import Wishlist from "../Wishlist/Wishlist";
 import { RxCross1 } from "react-icons/rx";
 import { FiShoppingBag } from "react-icons/fi";
 import axios from "axios";
-import { server } from "../../server";
+import server from "../../server";
 import { toast } from "react-toastify";
 import logo from '../../assets/logo.png';
 

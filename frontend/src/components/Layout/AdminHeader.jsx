@@ -7,7 +7,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { Link } from 'react-router-dom'
 import { markAsRead, markAllAsRead, setNotifications, setLoading, setError } from '../../redux/reducers/notificationSlice'
 import axios from 'axios'
-import { server } from '../../server'
+import server from '../../server'
 import logo from '../../assets/logo.png'
 
 const AdminHeader = () => {

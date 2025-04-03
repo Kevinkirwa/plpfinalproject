@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
-const server = axios.create({
+export const server = axios.create({
   baseURL: `${BACKEND_URL}/api/v2`,
   withCredentials: true,
 });
@@ -13,7 +13,7 @@ export const socketServer = BACKEND_URL.replace(/^http/, 'ws');
 export default server;
 
 // Add request interceptor to handle CORS and credentials
-axios.interceptors.request.use((config) => {
+server.interceptors.request.use((config) => {
   // Add CORS headers
   config.headers['Access-Control-Allow-Origin'] = '*';
   config.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,PATCH,OPTIONS';
@@ -21,7 +21,7 @@ axios.interceptors.request.use((config) => {
 });
 
 // Add response interceptor for better error handling
-axios.interceptors.response.use(
+server.interceptors.response.use(
   (response) => response,
   (error) => {
     // Log the full error details in development

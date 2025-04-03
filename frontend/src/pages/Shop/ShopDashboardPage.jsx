@@ -11,7 +11,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { Button } from "@mui/material";
 import styles from "../../styles/styles";
 import axios from "axios";
-import { server } from "../../server";
+import server from "../../server";
 import { toast } from "react-toastify";
 import { TbTruckDelivery } from "react-icons/tb";
 import Loader from "../../components/Layout/Loader";

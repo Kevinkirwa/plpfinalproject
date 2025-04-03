@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { server } from "../../server";
+import server from "../../server";
 import { toast } from "react-toastify";
 import { AiOutlineCheck, AiOutlineClose } from "react-icons/ai";
 import { FaFileAlt } from "react-icons/fa";

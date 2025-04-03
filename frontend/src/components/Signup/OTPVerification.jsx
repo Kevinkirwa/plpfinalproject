@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styles from "../../styles/styles";
 import axios from "axios";
-import { server } from "../../server";
+import server from "../../server";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 

@@ -3,7 +3,7 @@ import styles from "../../styles/styles";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axios from "axios";
-import { server } from "../../server";
+import server from "../../server";
 import { toast } from "react-toastify";
 import { kenyaCounties } from "../../static/data";
 
