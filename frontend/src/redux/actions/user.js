@@ -8,20 +8,31 @@ export const loadUser = () => async (dispatch) => {
     dispatch({
       type: "LoadUserRequest",
     });
-    const { data } = await axios.get(`${server}/user/getuser`, {
+    const { data } = await server.get(`/user/getuser`, {
       withCredentials: true,
     });
-    console.log("User loaded successfully:", data.user);
-    dispatch({
-      type: "LoadUserSuccess",
-      payload: data.user,
-    });
-    return data.user;
+    console.log("User load response:", data);
+    
+    if (data && data.user) {
+      console.log("User authenticated:", data.user);
+      dispatch({
+        type: "LoadUserSuccess",
+        payload: data.user,
+      });
+      return data.user;
+    } else {
+      console.log("No user data received - user not authenticated");
+      dispatch({
+        type: "LoadUserFail",
+        payload: null,
+      });
+      return null;
+    }
   } catch (error) {
     console.error("Error loading user:", error.response?.data?.message || error.message);
     dispatch({
       type: "LoadUserFail",
-      payload: error.response?.data?.message || "Failed to load user",
+      payload: null,
     });
     return null;
   }
@@ -34,20 +45,31 @@ export const loadSeller = () => async (dispatch) => {
     dispatch({
       type: "LoadSellerRequest",
     });
-    const { data } = await axios.get(`${server}/shop/getSeller`, {
+    const { data } = await server.get(`/shop/getSeller`, {
       withCredentials: true,
     });
-    console.log("Seller loaded successfully:", data.seller);
-    dispatch({
-      type: "LoadSellerSuccess",
-      payload: data.seller,
-    });
-    return data.seller;
+    console.log("Seller load response:", data);
+    
+    if (data && data.seller) {
+      console.log("Seller authenticated:", data.seller);
+      dispatch({
+        type: "LoadSellerSuccess",
+        payload: data.seller,
+      });
+      return data.seller;
+    } else {
+      console.log("No seller data received - not a seller");
+      dispatch({
+        type: "LoadSellerFail",
+        payload: null,
+      });
+      return null;
+    }
   } catch (error) {
     console.error("Error loading seller:", error.response?.data?.message || error.message);
     dispatch({
       type: "LoadSellerFail",
-      payload: error.response?.data?.message || "Failed to load seller",
+      payload: null,
     });
     return null;
   }

@@ -1,15 +1,12 @@
 import axios from 'axios';
 
 // Get the API URL from environment variables or use localhost as fallback
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 // Create axios instance with base URL
 const server = axios.create({
   baseURL: API_URL,
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 // Export the socket server URL based on environment
@@ -22,25 +19,31 @@ console.log("Backend URL:", API_URL);
 console.log("Socket Server URL:", socketServer);
 
 // Add request interceptor to handle CORS and credentials
-server.interceptors.request.use((config) => {
-  // Add CORS headers
-  config.headers['Access-Control-Allow-Origin'] = '*';
-  config.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,PATCH,OPTIONS';
-  config.headers['Access-Control-Allow-Credentials'] = 'true';
-  return config;
-});
+server.interceptors.request.use(
+  (config) => {
+    // Add CORS headers
+    config.headers['Access-Control-Allow-Origin'] = process.env.NODE_ENV === 'production' 
+      ? 'https://plpfinalproject.vercel.app'
+      : 'http://localhost:3000';
+    config.headers['Access-Control-Allow-Credentials'] = 'true';
+    config.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,PATCH,OPTIONS';
+    config.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // Add response interceptor for better error handling
 server.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Log the full error details in development
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV === 'development') {
       console.error('API Error:', {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status,
-        config: error.config
       });
     }
     

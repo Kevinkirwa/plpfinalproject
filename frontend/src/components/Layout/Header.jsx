@@ -10,7 +10,7 @@ import {
 import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io";
 import { BiMenuAltLeft } from "react-icons/bi";
 import { CgProfile } from "react-icons/cg";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import DropDown from "./DropDown";
 import Navbar from "./Navbar";
 import Cart from "../cart/Cart";
@@ -40,6 +40,7 @@ const Header = ({ activeHeading }) => {
   const [openWishlist, setOpenWishlist] = useState(false);
   const [open, setOpen] = useState(false);
   const [userDropdown, setUserDropdown] = useState(false);
+  const dispatch = useDispatch();
 
   // Add debug logging for authentication state
   useEffect(() => {
@@ -67,16 +68,32 @@ const Header = ({ activeHeading }) => {
   };
 
   const logoutHandler = () => {
-    axios
-      .get(`${server}/user/logout`, { withCredentials: true })
-      .then((res) => {
-        toast.success(res.data.message);
-        navigate("/login");
-        window.location.reload(true);
-      })
-      .catch((error) => {
-        console.log(error.response.data.message);
+    try {
+      dispatch({ type: "LogoutRequest" });
+      axios
+        .get(`${server}/user/logout`, { withCredentials: true })
+        .then((res) => {
+          dispatch({ type: "LogoutSuccess" });
+          toast.success(res.data.message);
+          navigate("/login");
+          window.location.reload(true);
+        })
+        .catch((error) => {
+          console.error("Logout error:", error);
+          dispatch({
+            type: "LogoutFail",
+            payload: error.response?.data?.message || "Logout failed"
+          });
+          toast.error(error.response?.data?.message || "Logout failed");
+        });
+    } catch (error) {
+      console.error("Logout error:", error);
+      dispatch({
+        type: "LogoutFail",
+        payload: error.message
       });
+      toast.error(error.message);
+    }
   };
 
   window.addEventListener("scroll", () => {

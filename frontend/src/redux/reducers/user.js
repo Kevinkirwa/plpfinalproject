@@ -2,15 +2,19 @@ import { createReducer } from "@reduxjs/toolkit";
 
 const initialState = {
   isAuthenticated: false,
+  loading: false,
+  user: null,
+  error: null,
 };
 
 export const userReducer = createReducer(initialState, (builder) => {
   builder
     .addCase("LoadUserRequest", (state) => {
       state.loading = true;
+      state.isAuthenticated = false;
     })
     .addCase("LoadUserSuccess", (state, action) => {
-      state.isAuthenticated = true;
+      state.isAuthenticated = Boolean(action.payload);
       state.loading = false;
       state.user = action.payload;
     })
@@ -18,6 +22,19 @@ export const userReducer = createReducer(initialState, (builder) => {
       state.loading = false;
       state.error = action.payload;
       state.isAuthenticated = false;
+      state.user = null;
+    })
+    .addCase("LogoutRequest", (state) => {
+      state.loading = true;
+    })
+    .addCase("LogoutSuccess", (state) => {
+      state.loading = false;
+      state.isAuthenticated = false;
+      state.user = null;
+    })
+    .addCase("LogoutFail", (state, action) => {
+      state.loading = false;
+      state.error = action.payload;
     })
     .addCase("updateUserInfoRequest", (state) => {
       state.loading = true;
