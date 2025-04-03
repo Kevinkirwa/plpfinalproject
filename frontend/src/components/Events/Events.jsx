@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import styles from '../../styles/styles'
 import EventCard from "./EventCard";
 
+// Component to display events with proper error handling
 const Events = () => {
   const { allEvents, isLoading } = useSelector((state) => state.events);  
    

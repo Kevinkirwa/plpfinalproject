@@ -117,3 +117,4 @@ typings/
 # Uploads
 /backend/uploads/*
 !/backend/uploads/.gitkeep
+.vercel
