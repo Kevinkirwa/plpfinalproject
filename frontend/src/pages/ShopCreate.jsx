@@ -5,18 +5,20 @@ import ShopCreate from "../components/Shop/ShopCreate";
 
 const ShopCreatePage = () => {
   const navigate = useNavigate();
-  const { isSeller,seller } = useSelector((state) => state.seller);
+  const { isSeller, seller } = useSelector((state) => state.seller);
 
   useEffect(() => {
-    if(isSeller === true){
+    // Only redirect if user is already a seller
+    if (isSeller === true && seller?._id) {
       navigate(`/shop/${seller._id}`);
     }
-  }, [])
+  }, [isSeller, seller, navigate]);
+
   return (
     <div>
-        <ShopCreate />
+      <ShopCreate />
     </div>
-  )
+  );
 }
 
-export default ShopCreatePage
+export default ShopCreatePage;

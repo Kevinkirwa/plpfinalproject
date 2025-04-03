@@ -3,18 +3,17 @@ import Header from "../components/Layout/Header";
 import { useSelector } from "react-redux";
 import socketIO from "socket.io-client";
 import { format } from "timeago.js";
-import server from "../server";
+import server, { socketServer } from "../server";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { AiOutlineArrowRight, AiOutlineSend } from "react-icons/ai";
 import { TfiGallery } from "react-icons/tfi";
 import styles from "../styles/styles";
 
-const ENDPOINT = "http://localhost:8000";
-const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
+const socketId = socketIO(socketServer, { transports: ["websocket"] });
 
 const UserInbox = () => {
-  const { user,loading } = useSelector((state) => state.user);
+  const { user, loading } = useSelector((state) => state.user);
   const [conversations, setConversations] = useState([]);
   const [arrivalMessage, setArrivalMessage] = useState(null);
   const [currentChat, setCurrentChat] = useState();
@@ -26,6 +25,13 @@ const UserInbox = () => {
   const [activeStatus, setActiveStatus] = useState(false);
   const [open, setOpen] = useState(false);
   const scrollRef = useRef(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user && !loading) {
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     socketId.on("getMessage", (data) => {
@@ -46,8 +52,10 @@ const UserInbox = () => {
   useEffect(() => {
     const getConversation = async () => {
       try {
+        if (!user?._id) return;
+        
         const resonse = await axios.get(
-          `${server}/conversation/get-all-conversation-user/${user?._id}`,
+          `${server}/conversation/get-all-conversation-user/${user._id}`,
           {
             withCredentials: true,
           }
@@ -55,15 +63,15 @@ const UserInbox = () => {
 
         setConversations(resonse.data.conversations);
       } catch (error) {
-        // console.log(error);
+        console.error("Error getting conversations:", error);
       }
     };
     getConversation();
   }, [user, messages]);
 
   useEffect(() => {
-    if (user) {
-      const sellerId = user?._id;
+    if (user?._id) {
+      const sellerId = user._id;
       socketId.emit("addUser", sellerId);
       socketId.on("getUsers", (data) => {
         setOnlineUsers(data);
@@ -72,7 +80,9 @@ const UserInbox = () => {
   }, [user]);
 
   const onlineCheck = (chat) => {
-    const chatMembers = chat.members.find((member) => member !== user?._id);
+    if (!user?._id || !chat?.members) return false;
+    
+    const chatMembers = chat.members.find((member) => member !== user._id);
     const online = onlineUsers.find((user) => user.userId === chatMembers);
 
     return online ? true : false;
@@ -82,12 +92,14 @@ const UserInbox = () => {
   useEffect(() => {
     const getMessage = async () => {
       try {
+        if (!currentChat?._id) return;
+        
         const response = await axios.get(
-          `${server}/message/get-all-messages/${currentChat?._id}`
+          `${server}/message/get-all-messages/${currentChat._id}`
         );
         setMessages(response.data.messages);
       } catch (error) {
-        console.log(error);
+        console.error("Error getting messages:", error);
       }
     };
     getMessage();
@@ -96,6 +108,8 @@ const UserInbox = () => {
   // create new message
   const sendMessageHandler = async (e) => {
     e.preventDefault();
+    
+    if (!user?._id || !currentChat?._id) return;
 
     const message = {
       sender: user._id,
@@ -103,11 +117,11 @@ const UserInbox = () => {
       conversationId: currentChat._id,
     };
     const receiverId = currentChat.members.find(
-      (member) => member !== user?._id
+      (member) => member !== user._id
     );
 
     socketId.emit("sendMessage", {
-      senderId: user?._id,
+      senderId: user._id,
       receiverId,
       text: newMessage,
     });
@@ -121,15 +135,17 @@ const UserInbox = () => {
             updateLastMessage();
           })
           .catch((error) => {
-            console.log(error);
+            console.error("Error sending message:", error);
           });
       }
     } catch (error) {
-      console.log(error);
+      console.error("Error in sendMessageHandler:", error);
     }
   };
 
   const updateLastMessage = async () => {
+    if (!user?._id || !currentChat?._id) return;
+    
     socketId.emit("updateLastMessage", {
       lastMessage: newMessage,
       lastMessageId: user._id,
@@ -144,7 +160,7 @@ const UserInbox = () => {
         setNewMessage("");
       })
       .catch((error) => {
-        console.log(error);
+        console.error("Error updating last message:", error);
       });
   };
 

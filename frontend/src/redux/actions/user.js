@@ -16,12 +16,14 @@ export const loadUser = () => async (dispatch) => {
       type: "LoadUserSuccess",
       payload: data.user,
     });
+    return data.user;
   } catch (error) {
     console.error("Error loading user:", error.response?.data?.message || error.message);
     dispatch({
       type: "LoadUserFail",
-      payload: error.response.data.message,
+      payload: error.response?.data?.message || "Failed to load user",
     });
+    return null;
   }
 };
 
@@ -40,12 +42,14 @@ export const loadSeller = () => async (dispatch) => {
       type: "LoadSellerSuccess",
       payload: data.seller,
     });
+    return data.seller;
   } catch (error) {
     console.error("Error loading seller:", error.response?.data?.message || error.message);
     dispatch({
       type: "LoadSellerFail",
-      payload: error.response.data.message,
+      payload: error.response?.data?.message || "Failed to load seller",
     });
+    return null;
   }
 };
 
