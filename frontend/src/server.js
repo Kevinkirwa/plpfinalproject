@@ -2,14 +2,22 @@ import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
-export const server = axios.create({
+// Log the backend URL for debugging
+console.log("Backend URL:", BACKEND_URL);
+
+const server = axios.create({
   baseURL: `${BACKEND_URL}/api/v2`,
   withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
 // Use the same backend URL for WebSocket, just change the protocol
 export const socketServer = BACKEND_URL.replace(/^http/, 'ws');
 
+// Export both as default and named exports
+export { BACKEND_URL as backend_url, server };
 export default server;
 
 // Add request interceptor to handle CORS and credentials
@@ -17,6 +25,7 @@ server.interceptors.request.use((config) => {
   // Add CORS headers
   config.headers['Access-Control-Allow-Origin'] = '*';
   config.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,PATCH,OPTIONS';
+  config.headers['Access-Control-Allow-Credentials'] = 'true';
   return config;
 });
 

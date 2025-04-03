@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { categoriesData, productData } from "../../static/data";
 import {
@@ -41,6 +41,11 @@ const Header = ({ activeHeading }) => {
   const [open, setOpen] = useState(false);
   const [userDropdown, setUserDropdown] = useState(false);
 
+  // Add debug logging for authentication state
+  useEffect(() => {
+    console.log("Auth state in Header:", { isAuthenticated, isSeller });
+  }, [isAuthenticated, isSeller]);
+
   const handleSearchChange = (e) => {
     const term = e.target.value;
     setSearchTerm(term);
@@ -54,7 +59,8 @@ const Header = ({ activeHeading }) => {
   };
 
   const handleSellerClick = () => {
-    if (isSeller) {
+    // Add safety check to ensure user is authenticated before showing dashboard
+    if (isSeller && isAuthenticated) {
       return "/dashboard";
     }
     return "/shop-create";

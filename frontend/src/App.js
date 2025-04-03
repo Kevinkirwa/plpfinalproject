@@ -20,6 +20,7 @@ import {
   OrderDetailsPage,
   TrackOrderPage,
   UserInbox,
+  AboutPage,
 } from "./routes/Routes.js";
 import {
   ShopDashboardPage,
@@ -115,6 +116,7 @@ const App = () => {
             <Route path="/best-selling" element={<BestSellingPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/faq" element={<FAQPage />} />
+            <Route path="/about" element={<AboutPage />} />
             <Route path="/order/success" element={<OrderSuccessPage />} />
             <Route path="/order/:id" element={<OrderDetailsPage />} />
             <Route path="/track/order/:id" element={<TrackOrderPage />} />

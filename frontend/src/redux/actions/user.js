@@ -4,17 +4,20 @@ import server from "../../server";
 // load user
 export const loadUser = () => async (dispatch) => {
   try {
+    console.log("Loading user...");
     dispatch({
       type: "LoadUserRequest",
     });
     const { data } = await axios.get(`${server}/user/getuser`, {
       withCredentials: true,
     });
+    console.log("User loaded successfully:", data.user);
     dispatch({
       type: "LoadUserSuccess",
       payload: data.user,
     });
   } catch (error) {
+    console.error("Error loading user:", error.response?.data?.message || error.message);
     dispatch({
       type: "LoadUserFail",
       payload: error.response.data.message,
@@ -25,17 +28,20 @@ export const loadUser = () => async (dispatch) => {
 // load seller
 export const loadSeller = () => async (dispatch) => {
   try {
+    console.log("Loading seller...");
     dispatch({
       type: "LoadSellerRequest",
     });
     const { data } = await axios.get(`${server}/shop/getSeller`, {
       withCredentials: true,
     });
+    console.log("Seller loaded successfully:", data.seller);
     dispatch({
       type: "LoadSellerSuccess",
       payload: data.seller,
     });
   } catch (error) {
+    console.error("Error loading seller:", error.response?.data?.message || error.message);
     dispatch({
       type: "LoadSellerFail",
       payload: error.response.data.message,
