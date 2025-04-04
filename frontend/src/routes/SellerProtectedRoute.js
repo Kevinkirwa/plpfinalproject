@@ -17,6 +17,8 @@ const SellerProtectedRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
+  // Only redirect to shop-create if the user is authenticated but not a seller
+  // and trying to access seller-specific routes
   if (!isSeller) {
     console.log("SellerProtectedRoute - Not a seller, redirecting to shop-create");
     return <Navigate to="/shop-create" replace />;

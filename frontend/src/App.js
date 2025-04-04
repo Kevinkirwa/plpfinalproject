@@ -66,31 +66,32 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const initializeApp = async () => {
+    const loadInitialData = async () => {
       try {
-        setIsLoading(true);
+        // Load products and events first since they don't require auth
         await Promise.all([
-          store.dispatch(loadUser()),
-          store.dispatch(loadSeller()),
           store.dispatch(getAllProducts()),
           store.dispatch(getAllEvents())
         ]);
+
+        // Then try to load user and seller data
+        // These will fail silently if not authenticated
+        await Promise.allSettled([
+          store.dispatch(loadUser()),
+          store.dispatch(loadSeller())
+        ]);
       } catch (error) {
-        console.error("Error initializing app:", error);
+        console.error("Error loading initial data:", error);
       } finally {
         setIsLoading(false);
       }
     };
-
-    initializeApp();
+    
+    loadInitialData();
   }, []);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader />
-      </div>
-    );
+    return <Loader />;
   }
 
   return (

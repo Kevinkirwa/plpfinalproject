@@ -60,17 +60,12 @@ const Header = ({ activeHeading }) => {
   };
 
   const handleSellerClick = () => {
-    if (!isAuthenticated) {
-      navigate("/shop-create");
-      return;
-    }
-    
     // If user is authenticated and is a seller, go to dashboard
-    if (isSeller) {
+    if (isAuthenticated && isSeller) {
       return "/dashboard";
     }
     
-    // If user is authenticated but not a seller, go to create shop
+    // For all other cases (not authenticated or not a seller), go to shop-create
     return "/shop-create";
   };
 

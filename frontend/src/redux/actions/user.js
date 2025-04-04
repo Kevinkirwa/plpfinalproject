@@ -1,35 +1,33 @@
 import axios from "axios";
-import server from "../../server";
+import { server } from "../../server";
 
 // load user
 export const loadUser = () => async (dispatch) => {
   try {
-    console.log("Loading user...");
     dispatch({
       type: "LoadUserRequest",
     });
-    const { data } = await server.get(`/user/getuser`, {
-      withCredentials: true,
-    });
-    console.log("User load response:", data);
+
+    const { data } = await server.get("/user/getuser");
     
-    if (data && data.user) {
-      console.log("User authenticated:", data.user);
+    if (data?.user) {
       dispatch({
         type: "LoadUserSuccess",
         payload: data.user,
       });
       return data.user;
-    } else {
-      console.log("No user data received - user not authenticated");
-      dispatch({
-        type: "LoadUserFail",
-        payload: null,
-      });
-      return null;
     }
+    
+    dispatch({
+      type: "LoadUserFail",
+      payload: null,
+    });
+    return null;
   } catch (error) {
-    console.error("Error loading user:", error.response?.data?.message || error.message);
+    // Don't log error for 401 - it's expected when not logged in
+    if (error.response?.status !== 401) {
+      console.error("Error loading user:", error.response?.data?.message || error.message);
+    }
     dispatch({
       type: "LoadUserFail",
       payload: null,
@@ -41,32 +39,30 @@ export const loadUser = () => async (dispatch) => {
 // load seller
 export const loadSeller = () => async (dispatch) => {
   try {
-    console.log("Loading seller...");
     dispatch({
       type: "LoadSellerRequest",
     });
-    const { data } = await server.get(`/shop/getSeller`, {
-      withCredentials: true,
-    });
-    console.log("Seller load response:", data);
+
+    const { data } = await server.get("/shop/getSeller");
     
-    if (data && data.seller) {
-      console.log("Seller authenticated:", data.seller);
+    if (data?.seller) {
       dispatch({
         type: "LoadSellerSuccess",
         payload: data.seller,
       });
       return data.seller;
-    } else {
-      console.log("No seller data received - not a seller");
-      dispatch({
-        type: "LoadSellerFail",
-        payload: null,
-      });
-      return null;
     }
+    
+    dispatch({
+      type: "LoadSellerFail",
+      payload: null,
+    });
+    return null;
   } catch (error) {
-    console.error("Error loading seller:", error.response?.data?.message || error.message);
+    // Don't log error for 401 - it's expected when not logged in
+    if (error.response?.status !== 401) {
+      console.error("Error loading seller:", error.response?.data?.message || error.message);
+    }
     dispatch({
       type: "LoadSellerFail",
       payload: null,

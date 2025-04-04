@@ -1,11 +1,17 @@
 import axios from 'axios';
 
-// Get the API URL from environment variables
-export const API_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://plpfinalproject-2.onrender.com'
-  : 'http://localhost:8000';
-export const SOCKET_URL = process.env.REACT_APP_SOCKET_SERVER_URL || API_URL;
-export const backend_url = API_URL;  // For backward compatibility
+// Get the API URL based on environment
+const API_URL = process.env.NODE_ENV === 'production'
+  ? process.env.REACT_APP_PRODUCTION_API_URL
+  : process.env.REACT_APP_API_URL;
+
+// Get the Socket URL based on environment
+const SOCKET_URL = process.env.NODE_ENV === 'production'
+  ? process.env.REACT_APP_PRODUCTION_SOCKET_URL
+  : process.env.REACT_APP_SOCKET_SERVER_URL;
+
+export const backend_url = API_URL;
+export const socketServer = SOCKET_URL;
 
 console.log('Environment:', process.env.NODE_ENV);
 console.log('API URL:', API_URL);
@@ -23,7 +29,7 @@ const server = axios.create({
 // Add request interceptor
 server.interceptors.request.use(
   (config) => {
-    // Log request details in all environments for debugging
+    // Log request details
     console.log('API Request:', {
       url: config.url,
       method: config.method,
@@ -41,7 +47,7 @@ server.interceptors.request.use(
   }
 );
 
-// Add response interceptor for better error handling
+// Add response interceptor
 server.interceptors.response.use(
   (response) => {
     console.log('API Response Success:', {
@@ -52,7 +58,6 @@ server.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Log detailed error information in all environments
     console.error('API Error:', {
       message: error.message,
       response: error.response?.data,
@@ -61,24 +66,11 @@ server.interceptors.response.use(
       method: error.config?.method,
       stack: error.stack
     });
-    
-    // Check for specific error types
-    if (error.response?.status === 401) {
-      console.log('Authentication error - user not logged in or token expired');
-    } else if (error.response?.status === 403) {
-      console.log('Authorization error - user not permitted');
-    } else if (!error.response) {
-      console.log('Network error - no response from server');
-    }
-    
     return Promise.reject(error);
   }
 );
 
-// Export socket server URL
-export const socketServer = SOCKET_URL;
-
-// Export server as both default and named export
+// Export both as default and named export
 export { server };
 export default server;
 

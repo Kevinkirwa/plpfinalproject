@@ -3,7 +3,7 @@ import Header from "../components/Layout/Header";
 import { useSelector } from "react-redux";
 import socketIO from "socket.io-client";
 import { format } from "timeago.js";
-import server, { socketServer } from "../server";
+import { backend_url, socketServer } from "../server";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { AiOutlineArrowRight, AiOutlineSend } from "react-icons/ai";
@@ -55,7 +55,7 @@ const UserInbox = () => {
         if (!user?._id) return;
         
         const resonse = await axios.get(
-          `${server}/conversation/get-all-conversation-user/${user._id}`,
+          `${backend_url}/conversation/get-all-conversation-user/${user._id}`,
           {
             withCredentials: true,
           }
@@ -95,7 +95,7 @@ const UserInbox = () => {
         if (!currentChat?._id) return;
         
         const response = await axios.get(
-          `${server}/message/get-all-messages/${currentChat._id}`
+          `${backend_url}/message/get-all-messages/${currentChat._id}`
         );
         setMessages(response.data.messages);
       } catch (error) {
@@ -129,7 +129,7 @@ const UserInbox = () => {
     try {
       if (newMessage !== "") {
         await axios
-          .post(`${server}/message/create-new-message`, message)
+          .post(`${backend_url}/message/create-new-message`, message)
           .then((res) => {
             setMessages([...messages, res.data.message]);
             updateLastMessage();
@@ -152,7 +152,7 @@ const UserInbox = () => {
     });
 
     await axios
-      .put(`${server}/conversation/update-last-message/${currentChat._id}`, {
+      .put(`${backend_url}/conversation/update-last-message/${currentChat._id}`, {
         lastMessage: newMessage,
         lastMessageId: user._id,
       })
@@ -192,7 +192,7 @@ const UserInbox = () => {
     try {
       await axios
         .post(
-          `${server}/message/create-new-message`,
+          `${backend_url}/message/create-new-message`,
           {
             images: e,
             sender: user._id,
@@ -212,7 +212,7 @@ const UserInbox = () => {
 
   const updateLastMessageForImage = async () => {
     await axios.put(
-      `${server}/conversation/update-last-message/${currentChat._id}`,
+      `${backend_url}/conversation/update-last-message/${currentChat._id}`,
       {
         lastMessage: "Photo",
         lastMessageId: user._id,
@@ -295,7 +295,7 @@ const MessageList = ({
     const userId = data.members.find((user) => user !== me);
     const getUser = async () => {
       try {
-        const res = await axios.get(`${server}/shop/get-shop-info/${userId}`);
+        const res = await axios.get(`${backend_url}/shop/get-shop-info/${userId}`);
         setUser(res.data.shop);
       } catch (error) {
         console.log(error);
