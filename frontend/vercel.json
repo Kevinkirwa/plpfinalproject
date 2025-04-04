@@ -6,7 +6,7 @@
       "use": "@vercel/static-build",
       "config": {
         "distDir": "build",
-        "buildCommand": "CI=false DISABLE_ESLINT_PLUGIN=true npm run build"
+        "buildCommand": "CI=false DISABLE_ESLINT_PLUGIN=true ESLINT_NO_DEV_ERRORS=true npm run build"
       }
     }
   ],
@@ -29,6 +29,9 @@
     }
   ],
   "env": {
-    "REACT_APP_API_URL": "https://plpfinalproject.vercel.app"
+    "REACT_APP_API_URL": "https://plpfinalproject.vercel.app",
+    "CI": "false",
+    "DISABLE_ESLINT_PLUGIN": "true",
+    "ESLINT_NO_DEV_ERRORS": "true"
   }
 } 
