@@ -7,9 +7,9 @@ import { cartReducer } from "./reducers/cart";
 import { wishlistReducer } from "./reducers/wishlist";
 import { orderReducer } from "./reducers/order";
 import notificationReducer from './reducers/notificationSlice';
+import { shopReducer } from "./reducers/shop";
 
-
-const Store = configureStore({
+export const store = configureStore({
   reducer: {
     user: userReducer,
     seller: sellerReducer,
@@ -19,7 +19,9 @@ const Store = configureStore({
     wishlist: wishlistReducer,
     order: orderReducer,
     notification: notificationReducer,
+    shop: shopReducer,
   },
 });
 
-export default Store;
+// For backwards compatibility
+export default store;

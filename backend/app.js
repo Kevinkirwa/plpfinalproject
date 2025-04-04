@@ -10,9 +10,7 @@ const cloudinary = require("cloudinary").v2;
 
 // config
 if (process.env.NODE_ENV !== "PRODUCTION") {
-  require("dotenv").config({
-    path: "config/.env",
-  });
+  require("dotenv").config();
 }
 
 // Cloudinary config
@@ -26,6 +24,10 @@ cloudinary.config({
 console.log('Environment:', {
   NODE_ENV: process.env.NODE_ENV,
   PORT: process.env.PORT,
+  MONGODB_URL: process.env.MONGODB_URL ? "Set" : "Not set",
+  CLOUDINARY_NAME: process.env.CLOUDINARY_NAME ? "Set" : "Not set",
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY ? "Set" : "Not set",
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET ? "Set" : "Not set",
   hasMpesaKey: !!process.env.MPESA_CONSUMER_KEY,
   hasMpesaSecret: !!process.env.MPESA_CONSUMER_SECRET,
   hasMpesaPasskey: !!process.env.MPESA_PASSKEY,
@@ -41,29 +43,37 @@ app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // CORS configuration
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://plpfinalproject-git-main-kirwas-projects.vercel.app',
+  'https://plpfinalproject.vercel.app',
+  'https://plpfinalproject-2.onrender.com'
+];
+
 app.use(
   cors({
-    origin: process.env.NODE_ENV === "production"
-      ? [process.env.FRONTEND_URL]
-      : "http://localhost:3000",
+    origin: function(origin, callback) {
+      // allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+      "Access-Control-Allow-Credentials"
+    ],
+    exposedHeaders: ["set-cookie"]
   })
 );
-
-// Security headers
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Origin", process.env.FRONTEND_URL);
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET,OPTIONS,PATCH,DELETE,POST,PUT"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization"
-  );
-  next();
-});
 
 // import routes
 const user = require("./controller/user");

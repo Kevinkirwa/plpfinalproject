@@ -12,49 +12,153 @@ import ShopKYCVerification from "./ShopKYCVerification";
 const ShopCreate = () => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState();
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState("");
-  const [zipCode, setZipCode] = useState();
-  const [avatar, setAvatar] = useState();
+  const [zipCode, setZipCode] = useState("");
+  const [avatar, setAvatar] = useState(null);
   const [password, setPassword] = useState("");
   const [visible, setVisible] = useState(false);
   const [sellerId, setSellerId] = useState(null);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const validateForm = () => {
+    if (!name.trim()) {
+      toast.error("Please enter shop name");
+      return false;
+    }
+    if (!email.trim()) {
+      toast.error("Please enter email");
+      return false;
+    }
+    if (!password || password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return false;
+    }
+    if (!phoneNumber) {
+      toast.error("Please enter phone number");
+      return false;
+    }
+    if (!address.trim()) {
+      toast.error("Please enter address");
+      return false;
+    }
+    if (!zipCode) {
+      toast.error("Please enter zip code");
+      return false;
+    }
+    if (!avatar) {
+      toast.error("Please upload shop avatar/logo");
+      return false;
+    }
+    return true;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) return;
+    
+    setLoading(true);
+    console.log("ShopCreate - Submitting form with data:", {
+      name,
+      email,
+      phoneNumber,
+      address,
+      zipCode,
+      hasAvatar: !!avatar,
+      avatarLength: avatar ? avatar.length : 0
+    });
 
     try {
-      const response = await axios.post(`${server}/shop/create-shop`, {
-        name,
-        email,
+      // Validate and clean input data
+      const cleanedData = {
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
         password,
-        avatar,
-        zipCode,
-        address,
-        phoneNumber,
+        address: address.trim(),
+        phoneNumber: phoneNumber.toString().replace(/[^0-9]/g, ''),
+        zipCode: zipCode.toString().replace(/[^0-9]/g, ''),
+        avatar
+      };
+
+      // Additional validation
+      if (cleanedData.phoneNumber.length < 10) {
+        toast.error("Please enter a valid phone number");
+        return;
+      }
+
+      if (cleanedData.zipCode.length < 4) {
+        toast.error("Please enter a valid zip code");
+        return;
+      }
+
+      // Convert to numbers after validation
+      cleanedData.phoneNumber = parseInt(cleanedData.phoneNumber, 10);
+      cleanedData.zipCode = parseInt(cleanedData.zipCode, 10);
+
+      if (!avatar || !avatar.startsWith('data:image')) {
+        toast.error("Please upload a valid image file");
+        return;
+      }
+
+      console.log("ShopCreate - Sending request to:", `${server}/shop/create-shop`);
+      const response = await axios.post(`${server}/shop/create-shop`, cleanedData, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity
       });
 
+      console.log("ShopCreate - Server response:", response.data);
+
       if (response.data.success) {
+        console.log("ShopCreate - Shop created successfully, sellerId:", response.data.sellerId);
         toast.success(response.data.message);
         setSellerId(response.data.sellerId);
       }
     } catch (error) {
-      toast.error(error.response.data.message);
+      console.error("ShopCreate - Error details:", {
+        message: error.response?.data?.message || error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data
+      });
+      toast.error(error.response?.data?.message || "Failed to create shop");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleFileInputChange = (e) => {
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      if (reader.readyState === 2) {
-        setAvatar(reader.result);
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast.error("File size should be less than 5MB");
+        return;
       }
-    };
 
-    reader.readAsDataURL(e.target.files[0]);
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please upload an image file");
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.readyState === 2) {
+          console.log("Avatar loaded successfully");
+          setAvatar(reader.result);
+        }
+      };
+      reader.onerror = () => {
+        toast.error("Error reading file");
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   if (sellerId && !isEmailVerified) {
@@ -80,15 +184,16 @@ const ShopCreate = () => {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label
-                htmlFor="email"
+                htmlFor="name"
                 className="block text-sm font-medium text-gray-700"
               >
                 Shop Name
               </label>
               <div className="mt-1">
                 <input
-                  type="name"
+                  type="text"
                   name="name"
+                  id="name"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -99,15 +204,16 @@ const ShopCreate = () => {
 
             <div>
               <label
-                htmlFor="email"
+                htmlFor="phoneNumber"
                 className="block text-sm font-medium text-gray-700"
               >
                 Phone Number
               </label>
               <div className="mt-1">
                 <input
-                  type="number"
-                  name="phone-number"
+                  type="tel"
+                  name="phoneNumber"
+                  id="phoneNumber"
                   required
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
@@ -127,6 +233,7 @@ const ShopCreate = () => {
                 <input
                   type="email"
                   name="email"
+                  id="email"
                   autoComplete="email"
                   required
                   value={email}
@@ -138,15 +245,16 @@ const ShopCreate = () => {
 
             <div>
               <label
-                htmlFor="email"
+                htmlFor="address"
                 className="block text-sm font-medium text-gray-700"
               >
                 Address
               </label>
               <div className="mt-1">
                 <input
-                  type="address"
+                  type="text"
                   name="address"
+                  id="address"
                   required
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
@@ -157,15 +265,16 @@ const ShopCreate = () => {
 
             <div>
               <label
-                htmlFor="email"
+                htmlFor="zipCode"
                 className="block text-sm font-medium text-gray-700"
               >
                 Zip Code
               </label>
               <div className="mt-1">
                 <input
-                  type="number"
-                  name="zipcode"
+                  type="text"
+                  name="zipCode"
+                  id="zipCode"
                   required
                   value={zipCode}
                   onChange={(e) => setZipCode(e.target.value)}
@@ -185,6 +294,7 @@ const ShopCreate = () => {
                 <input
                   type={visible ? "text" : "password"}
                   name="password"
+                  id="password"
                   autoComplete="current-password"
                   required
                   value={password}
@@ -211,7 +321,9 @@ const ShopCreate = () => {
               <label
                 htmlFor="avatar"
                 className="block text-sm font-medium text-gray-700"
-              ></label>
+              >
+                Shop Logo
+              </label>
               <div className="mt-2 flex items-center">
                 <span className="inline-block h-8 w-8 rounded-full overflow-hidden">
                   {avatar ? (
@@ -233,6 +345,7 @@ const ShopCreate = () => {
                     type="file"
                     name="avatar"
                     id="file-input"
+                    accept="image/*"
                     onChange={handleFileInputChange}
                     className="sr-only"
                   />
@@ -243,9 +356,12 @@ const ShopCreate = () => {
             <div>
               <button
                 type="submit"
-                className="group relative w-full h-[40px] flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                disabled={loading}
+                className={`group relative w-full h-[40px] flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
+                  loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                }`}
               >
-                Submit
+                {loading ? 'Creating...' : 'Submit'}
               </button>
             </div>
             <div className={`${styles.noramlFlex} w-full`}>

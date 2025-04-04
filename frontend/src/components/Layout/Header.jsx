@@ -60,10 +60,17 @@ const Header = ({ activeHeading }) => {
   };
 
   const handleSellerClick = () => {
-    // Add safety check to ensure user is authenticated before showing dashboard
-    if (isSeller && isAuthenticated) {
+    if (!isAuthenticated) {
+      navigate("/shop-create");
+      return;
+    }
+    
+    // If user is authenticated and is a seller, go to dashboard
+    if (isSeller) {
       return "/dashboard";
     }
+    
+    // If user is authenticated but not a seller, go to create shop
     return "/shop-create";
   };
 
@@ -120,7 +127,7 @@ const Header = ({ activeHeading }) => {
                   className="text-sm font-medium text-indigo-600 hover:text-indigo-700 flex items-center"
                 >
                   <FiShoppingBag className="mr-1" size={14} />
-                  {isSeller ? "Seller Dashboard" : "Become a Vendor"}
+                  {isSeller ? "Seller Dashboard" : "Start Selling Today"}
                 </Link>
                 <Link to="/about" className="text-sm text-gray-500 hover:text-gray-600">
                   About Us

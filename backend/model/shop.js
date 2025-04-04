@@ -10,6 +10,10 @@ const shopSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, "Please enter your shop email address"],
+    unique: true,
+    lowercase: true,
+    trim: true,
+    index: true,
   },
   password: {
     type: String,
@@ -61,6 +65,35 @@ const shopSchema = new mongoose.Schema({
     type: Number,
   },
   otpExpiry: {
+    type: Date,
+  },
+  kycDocuments: {
+    idFront: {
+      public_id: String,
+      url: String,
+    },
+    idBack: {
+      public_id: String,
+      url: String,
+    },
+    selfie: {
+      public_id: String,
+      url: String,
+    },
+    businessRegistration: {
+      public_id: String,
+      url: String,
+    },
+  },
+  kycStatus: {
+    type: String,
+    enum: ["pending", "approved", "rejected"],
+    default: "pending",
+  },
+  kycRejectionReason: {
+    type: String,
+  },
+  kycApprovedAt: {
     type: Date,
   },
   transections: [

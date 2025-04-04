@@ -13,55 +13,105 @@ const sendShopToken = require("../utils/shopToken");
 // create shop
 router.post("/create-shop", catchAsyncErrors(async (req, res, next) => {
   try {
+    console.log("Received shop creation request:", {
+      name: req.body.name,
+      email: req.body.email,
+      phoneNumber: req.body.phoneNumber,
+      address: req.body.address,
+      zipCode: req.body.zipCode,
+      hasAvatar: !!req.body.avatar,
+      avatarLength: req.body.avatar ? req.body.avatar.length : 0
+    });
+
+    // Validate required fields
+    const requiredFields = ['name', 'email', 'password', 'phoneNumber', 'address', 'zipCode', 'avatar'];
+    const missingFields = requiredFields.filter(field => !req.body[field]);
+    
+    if (missingFields.length > 0) {
+      return next(new ErrorHandler(`Missing required fields: ${missingFields.join(', ')}`, 400));
+    }
+
     const { email } = req.body;
     const sellerEmail = await Shop.findOne({ email });
     if (sellerEmail) {
       return next(new ErrorHandler("User already exists", 400));
     }
 
-    const myCloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
-      folder: "avatars",
-    });
+    // Validate avatar data
+    if (!req.body.avatar || !req.body.avatar.startsWith('data:image')) {
+      return next(new ErrorHandler("Invalid avatar format. Must be a valid base64 image", 400));
+    }
 
-    // Generate OTP
-    const otp = Math.floor(100000 + Math.random() * 900000);
-    const otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
-
-    const seller = {
-      name: req.body.name,
-      email: email,
-      password: req.body.password,
-      avatar: {
-        public_id: myCloud.public_id,
-        url: myCloud.secure_url,
-      },
-      address: req.body.address,
-      phoneNumber: req.body.phoneNumber,
-      zipCode: req.body.zipCode,
-      otp: otp,
-      otpExpiry: otpExpiry,
-      isVerified: false
-    };
-
-    // Save seller with OTP
-    const newSeller = await Shop.create(seller);
-
-    // Send OTP via email
     try {
-      await sendMail({
-        email: seller.email,
-        subject: "Verify your Shop",
-        message: `Hello ${seller.name}, your verification code is: ${otp}. This code will expire in 10 minutes.`,
+      // Upload to Cloudinary with explicit format and transformation
+      const myCloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
+        folder: "avatars",
+        format: 'webp',
+        transformation: [
+          { width: 150, height: 150, crop: 'fill' },
+          { quality: 'auto:good' }
+        ]
       });
-      res.status(201).json({
-        success: true,
-        message: `Please check your email for the verification code!`,
-        sellerId: newSeller._id
+
+      console.log("Cloudinary upload successful:", {
+        public_id: myCloud.public_id,
+        url: myCloud.secure_url
       });
+
+      // Generate OTP
+      const otp = Math.floor(100000 + Math.random() * 900000);
+      const otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+      // Create seller object with validated data
+      const seller = {
+        name: req.body.name.trim(),
+        email: email.toLowerCase().trim(),
+        password: req.body.password,
+        avatar: {
+          public_id: myCloud.public_id,
+          url: myCloud.secure_url,
+        },
+        address: req.body.address.trim(),
+        phoneNumber: parseInt(req.body.phoneNumber.toString().replace(/[^0-9]/g, ''), 10),
+        zipCode: parseInt(req.body.zipCode.toString().replace(/[^0-9]/g, ''), 10),
+        otp,
+        otpExpiry,
+        isVerified: false
+      };
+
+      // Save seller with OTP
+      const newSeller = await Shop.create(seller);
+      console.log("New seller created:", {
+        id: newSeller._id,
+        email: newSeller.email
+      });
+
+      // Send OTP via email
+      try {
+        await sendMail({
+          email: seller.email,
+          subject: "Verify your Shop",
+          message: `Hello ${seller.name}, your verification code is: ${otp}. This code will expire in 10 minutes.`,
+        });
+        console.log("Verification email sent successfully");
+        
+        res.status(201).json({
+          success: true,
+          message: `Please check your email for the verification code!`,
+          sellerId: newSeller._id
+        });
+      } catch (error) {
+        console.error("Error sending verification email:", error);
+        // Delete the created shop if email fails
+        await Shop.findByIdAndDelete(newSeller._id);
+        return next(new ErrorHandler("Failed to send verification email. Please try again.", 500));
+      }
     } catch (error) {
-      return next(new ErrorHandler(error.message, 500));
+      console.error("Error in Cloudinary upload:", error);
+      return next(new ErrorHandler("Error uploading shop avatar: " + error.message, 400));
     }
   } catch (error) {
+    console.error("Error in shop creation:", error);
     return next(new ErrorHandler(error.message, 400));
   }
 }));
@@ -396,6 +446,128 @@ router.delete(
       res.status(201).json({
         success: true,
         seller,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  })
+);
+
+// verify KYC
+router.post(
+  "/verify-kyc",
+  catchAsyncErrors(async (req, res, next) => {
+    try {
+      const { sellerId, documents } = req.body;
+
+      const seller = await Shop.findById(sellerId);
+
+      if (!seller) {
+        return next(new ErrorHandler("Seller not found", 400));
+      }
+
+      if (!seller.isVerified) {
+        return next(new ErrorHandler("Please verify your email first", 400));
+      }
+
+      // Upload documents to Cloudinary
+      const uploadedDocs = {};
+      for (const [key, value] of Object.entries(documents)) {
+        const result = await cloudinary.v2.uploader.upload(value, {
+          folder: `sellers/${sellerId}/kyc`,
+        });
+        uploadedDocs[key] = {
+          public_id: result.public_id,
+          url: result.secure_url,
+        };
+      }
+
+      // Update seller with KYC documents
+      seller.kycDocuments = uploadedDocs;
+      seller.kycStatus = "pending";
+      await seller.save();
+
+      // Send email notification to admin
+      await sendMail({
+        email: process.env.ADMIN_EMAIL,
+        subject: "New KYC Verification Request",
+        message: `A new KYC verification request has been submitted by ${seller.name} (${seller.email}). Please review the documents in the admin dashboard.`,
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "KYC documents submitted successfully. Pending admin review.",
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  })
+);
+
+// get pending KYC verifications -- admin
+router.get(
+  "/admin/pending-kyc",
+  isAuthenticated,
+  isAdmin("Admin"),
+  catchAsyncErrors(async (req, res, next) => {
+    try {
+      const sellers = await Shop.find({ kycStatus: "pending" }).select(
+        "name email address phoneNumber kycDocuments createdAt"
+      );
+
+      res.status(200).json({
+        success: true,
+        sellers,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  })
+);
+
+// review KYC verification -- admin
+router.post(
+  "/admin/review-kyc",
+  isAuthenticated,
+  isAdmin("Admin"),
+  catchAsyncErrors(async (req, res, next) => {
+    try {
+      const { sellerId, status, reason } = req.body;
+
+      const seller = await Shop.findById(sellerId);
+      if (!seller) {
+        return next(new ErrorHandler("Seller not found", 400));
+      }
+
+      seller.kycStatus = status;
+      if (status === "approved") {
+        seller.kycApprovedAt = Date.now();
+        seller.kycRejectionReason = undefined;
+      } else if (status === "rejected") {
+        seller.kycRejectionReason = reason;
+        seller.kycApprovedAt = undefined;
+      }
+
+      await seller.save();
+
+      // Send email notification to seller
+      const emailSubject = status === "approved" 
+        ? "KYC Verification Approved" 
+        : "KYC Verification Rejected";
+      
+      const emailMessage = status === "approved"
+        ? `Congratulations! Your KYC verification has been approved. You can now start selling on our platform.`
+        : `Your KYC verification has been rejected. Reason: ${reason}. Please submit new documents with the required corrections.`;
+
+      await sendMail({
+        email: seller.email,
+        subject: emailSubject,
+        message: emailMessage,
+      });
+
+      res.status(200).json({
+        success: true,
+        message: `KYC verification ${status} successfully`,
       });
     } catch (error) {
       return next(new ErrorHandler(error.message, 500));

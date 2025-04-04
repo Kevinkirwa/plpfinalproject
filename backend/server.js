@@ -1,3 +1,21 @@
+// Load environment variables first
+require("dotenv").config();
+
+// Validate required environment variables
+const requiredEnvVars = [
+  'DB_URL',
+  'JWT_SECRET',
+  'CLOUDINARY_NAME',
+  'CLOUDINARY_API_KEY',
+  'CLOUDINARY_API_SECRET'
+];
+
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+if (missingEnvVars.length > 0) {
+  console.error('Missing required environment variables:', missingEnvVars);
+  process.exit(1);
+}
+
 const express = require("express");
 const ErrorHandler = require("./middleware/error");
 const app = express();
@@ -8,6 +26,14 @@ const path = require("path");
 const connectDatabase = require("./db/Database");
 const http = require("http");
 const { Server } = require("socket.io");
+const cloudinary = require("cloudinary").v2;
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 // Handling uncaught Exception
 process.on("uncaughtException", (err) => {
@@ -16,25 +42,27 @@ process.on("uncaughtException", (err) => {
   process.exit(1);
 });
 
-// config
-require("dotenv").config({
-  path: ".env",
-});
+// CORS configuration
+app.use(cors({
+  origin: process.env.NODE_ENV === "production" 
+    ? "https://plpfinalproject.vercel.app" 
+    : "http://localhost:3000",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Origin"
+  ],
+  exposedHeaders: ["set-cookie"]
+}));
 
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
-
-// CORS configuration
-app.use(
-  cors({
-    origin: ["https://plpfinalproject.vercel.app", "http://localhost:3000"],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
-  })
-);
 
 // Security headers
 app.use((req, res, next) => {
@@ -50,6 +78,11 @@ app.use((req, res, next) => {
     "Access-Control-Allow-Headers",
     "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization"
   );
+  if (req.method === "OPTIONS") {
+    return res.status(200).json({
+      body: "OK"
+    });
+  }
   next();
 });
 
@@ -100,11 +133,20 @@ io.on("connection", (socket) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
+  console.error('Error details:', {
+    message: err.message,
+    stack: err.stack,
+    status: err.statusCode || 500,
+    path: req.path,
+    method: req.method,
+    body: req.body
+  });
+
+  res.status(err.statusCode || 500).json({
     success: false,
-    message: "Internal Server Error",
-    error: process.env.NODE_ENV === "development" ? err.message : undefined
+    message: err.message || "Internal Server Error",
+    error: process.env.NODE_ENV === "development" ? err : undefined,
+    stack: process.env.NODE_ENV === "development" ? err.stack : undefined
   });
 });
 

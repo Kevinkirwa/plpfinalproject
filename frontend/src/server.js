@@ -1,64 +1,85 @@
 import axios from 'axios';
 
-// Get the API URL from environment variables or use localhost as fallback
-export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+// Get the API URL from environment variables
+export const API_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://plpfinalproject-2.onrender.com'
+  : 'http://localhost:8000';
+export const SOCKET_URL = process.env.REACT_APP_SOCKET_SERVER_URL || API_URL;
+export const backend_url = API_URL;  // For backward compatibility
+
+console.log('Environment:', process.env.NODE_ENV);
+console.log('API URL:', API_URL);
+console.log('Socket URL:', SOCKET_URL);
 
 // Create axios instance with base URL
 const server = axios.create({
-  baseURL: API_URL,
+  baseURL: `${API_URL}/api/v2`,
   withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  }
 });
 
-// Export the socket server URL based on environment
-export const socketServer = process.env.NODE_ENV === 'production' 
-  ? API_URL 
-  : 'ws://localhost:8000';
-
-// Log the URLs for debugging
-console.log("Backend URL:", API_URL);
-console.log("Socket Server URL:", socketServer);
-
-// Add request interceptor to handle CORS and credentials
+// Add request interceptor
 server.interceptors.request.use(
   (config) => {
-    // Add CORS headers
-    config.headers['Access-Control-Allow-Origin'] = process.env.NODE_ENV === 'production' 
-      ? 'https://plpfinalproject.vercel.app'
-      : 'http://localhost:3000';
-    config.headers['Access-Control-Allow-Credentials'] = 'true';
-    config.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,PATCH,OPTIONS';
-    config.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
+    // Log request details in all environments for debugging
+    console.log('API Request:', {
+      url: config.url,
+      method: config.method,
+      baseURL: config.baseURL,
+      withCredentials: config.withCredentials
+    });
     return config;
   },
   (error) => {
+    console.error('Request Error:', {
+      message: error.message,
+      stack: error.stack
+    });
     return Promise.reject(error);
   }
 );
 
 // Add response interceptor for better error handling
 server.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('API Response Success:', {
+      url: response.config.url,
+      status: response.status,
+      statusText: response.statusText
+    });
+    return response;
+  },
   (error) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('API Error:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
+    // Log detailed error information in all environments
+    console.error('API Error:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      url: error.config?.url,
+      method: error.config?.method,
+      stack: error.stack
+    });
+    
+    // Check for specific error types
+    if (error.response?.status === 401) {
+      console.log('Authentication error - user not logged in or token expired');
+    } else if (error.response?.status === 403) {
+      console.log('Authorization error - user not permitted');
+    } else if (!error.response) {
+      console.log('Network error - no response from server');
     }
     
-    // In production, log minimal information
-    console.error('API Error:', {
-      status: error.response?.status,
-      message: error.response?.data?.message || error.message
-    });
-
     return Promise.reject(error);
   }
 );
 
-// Export the API URL and server instance
-export { API_URL as backend_url, server };
+// Export socket server URL
+export const socketServer = SOCKET_URL;
+
+// Export server as both default and named export
+export { server };
 export default server;
 
 
