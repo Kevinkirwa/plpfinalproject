@@ -1,5 +1,5 @@
 import axios from "axios";
-import { server } from "../../server";
+import server from "../../server";
 
 // load user
 export const loadUser = () => async (dispatch) => {
@@ -7,6 +7,15 @@ export const loadUser = () => async (dispatch) => {
     dispatch({
       type: "LoadUserRequest",
     });
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      dispatch({
+        type: "LoadUserFail",
+        payload: "No token found",
+      });
+      return null;
+    }
 
     const { data } = await server.get("/user/getuser");
     
@@ -20,17 +29,18 @@ export const loadUser = () => async (dispatch) => {
     
     dispatch({
       type: "LoadUserFail",
-      payload: null,
+      payload: "No user data received",
     });
     return null;
   } catch (error) {
-    // Don't log error for 401 - it's expected when not logged in
-    if (error.response?.status !== 401) {
-      console.error("Error loading user:", error.response?.data?.message || error.message);
+    // If token is invalid, clear it
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
     }
+    
     dispatch({
       type: "LoadUserFail",
-      payload: null,
+      payload: error.response?.data?.message || error.message,
     });
     return null;
   }
@@ -42,6 +52,15 @@ export const loadSeller = () => async (dispatch) => {
     dispatch({
       type: "LoadSellerRequest",
     });
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      dispatch({
+        type: "LoadSellerFail",
+        payload: "No token found",
+      });
+      return null;
+    }
 
     const { data } = await server.get("/shop/getSeller");
     
@@ -55,17 +74,18 @@ export const loadSeller = () => async (dispatch) => {
     
     dispatch({
       type: "LoadSellerFail",
-      payload: null,
+      payload: "No seller data received",
     });
     return null;
   } catch (error) {
-    // Don't log error for 401 - it's expected when not logged in
-    if (error.response?.status !== 401) {
-      console.error("Error loading seller:", error.response?.data?.message || error.message);
+    // If token is invalid, clear it
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
     }
+    
     dispatch({
       type: "LoadSellerFail",
-      payload: null,
+      payload: error.response?.data?.message || error.message,
     });
     return null;
   }

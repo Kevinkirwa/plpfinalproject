@@ -61,36 +61,73 @@ import axios from "axios";
 import server from "./server";
 import Loader from "./components/Layout/Loader";
 import ErrorBoundary from "./components/ErrorBoundary";
+import EmailVerification from './components/Signup/EmailVerification';
+import ShopVerification from './components/Shop/ShopVerification';
+import { initializeSocket, disconnectSocket } from './utils/socket';
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   useEffect(() => {
     const loadInitialData = async () => {
       try {
+        // Initialize socket connection
+        initializeSocket();
+
         // Load products and events first since they don't require auth
         await Promise.all([
           store.dispatch(getAllProducts()),
           store.dispatch(getAllEvents())
         ]);
 
-        // Then try to load user and seller data
-        // These will fail silently if not authenticated
-        await Promise.allSettled([
-          store.dispatch(loadUser()),
-          store.dispatch(loadSeller())
-        ]);
+        // Check if we have a token before trying to load user data
+        const token = localStorage.getItem('token');
+        if (token) {
+          try {
+            const [userResult, sellerResult] = await Promise.allSettled([
+              store.dispatch(loadUser()),
+              store.dispatch(loadSeller())
+            ]);
+
+            // Log the results for debugging
+            console.log('User load result:', userResult);
+            console.log('Seller load result:', sellerResult);
+
+            // Handle any rejected promises
+            if (userResult.status === 'rejected') {
+              console.error('Error loading user:', userResult.reason);
+              if (userResult.reason.response?.status === 401) {
+                localStorage.removeItem('token');
+              }
+            }
+            if (sellerResult.status === 'rejected') {
+              console.error('Error loading seller:', sellerResult.reason);
+            }
+          } catch (error) {
+            console.error('Error in auth data loading:', error);
+            if (error.response?.status === 401) {
+              localStorage.removeItem('token');
+            }
+          }
+        }
       } catch (error) {
         console.error("Error loading initial data:", error);
       } finally {
         setIsLoading(false);
+        setInitialLoadComplete(true);
       }
     };
     
     loadInitialData();
+
+    // Cleanup function
+    return () => {
+      disconnectSocket();
+    };
   }, []);
 
-  if (isLoading) {
+  if (isLoading && !initialLoadComplete) {
     return <Loader />;
   }
 
@@ -128,6 +165,8 @@ const App = () => {
               <Route path="/shop-create" element={<ShopCreatePage />} />
               <Route path="/shop-login" element={<ShopLoginPage />} />
               <Route path="/shop/:id" element={<ShopHomePage />} />
+              <Route path="/verify-email" element={<EmailVerification />} />
+              <Route path="/verify-shop" element={<ShopVerification />} />
 
               {/* Protected Routes */}
               <Route
@@ -189,6 +228,14 @@ const App = () => {
                 }
               />
               <Route
+                path="/dashboard-coupouns"
+                element={
+                  <SellerProtectedRoute>
+                    <ShopAllCoupouns />
+                  </SellerProtectedRoute>
+                }
+              />
+              <Route
                 path="/dashboard-orders"
                 element={
                   <SellerProtectedRoute>
@@ -225,14 +272,6 @@ const App = () => {
                 element={
                   <SellerProtectedRoute>
                     <ShopInboxPage />
-                  </SellerProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard-cupouns"
-                element={
-                  <SellerProtectedRoute>
-                    <ShopAllCoupouns />
                   </SellerProtectedRoute>
                 }
               />
@@ -295,14 +334,6 @@ const App = () => {
                 }
               />
               <Route
-                path="/admin-kyc"
-                element={
-                  <ProtectedAdminRoute>
-                    <AdminDashboardKYC />
-                  </ProtectedAdminRoute>
-                }
-              />
-              <Route
                 path="/admin-withdraw-request"
                 element={
                   <ProtectedAdminRoute>
@@ -310,20 +341,27 @@ const App = () => {
                   </ProtectedAdminRoute>
                 }
               />
+              <Route
+                path="/admin-kyc"
+                element={
+                  <ProtectedAdminRoute>
+                    <AdminDashboardKYC />
+                  </ProtectedAdminRoute>
+                }
+              />
             </Routes>
+            <ToastContainer
+              position="bottom-right"
+              autoClose={5000}
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+            />
           </div>
-          <ToastContainer
-            position="bottom-center"
-            autoClose={5000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="dark"
-          />
         </div>
       </BrowserRouter>
     </ErrorBoundary>

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { server } from "../../server";
+import server from "../../server";
 
 // create shop
 export const createShop = (shopData) => async (dispatch) => {

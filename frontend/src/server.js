@@ -3,12 +3,12 @@ import axios from 'axios';
 // Get the API URL based on environment
 const API_URL = process.env.NODE_ENV === 'production'
   ? process.env.REACT_APP_PRODUCTION_API_URL
-  : process.env.REACT_APP_API_URL;
+  : process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 // Get the Socket URL based on environment
 const SOCKET_URL = process.env.NODE_ENV === 'production'
   ? process.env.REACT_APP_PRODUCTION_SOCKET_URL
-  : process.env.REACT_APP_SOCKET_SERVER_URL;
+  : process.env.REACT_APP_SOCKET_SERVER_URL || "http://localhost:8000";
 
 export const backend_url = API_URL;
 export const socketServer = SOCKET_URL;
@@ -21,51 +21,32 @@ console.log('Socket URL:', SOCKET_URL);
 const server = axios.create({
   baseURL: `${API_URL}/api/v2`,
   withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  }
 });
 
-// Add request interceptor
+// Add a request interceptor to add the token to all requests
 server.interceptors.request.use(
   (config) => {
-    // Log request details
-    console.log('API Request:', {
-      url: config.url,
-      method: config.method,
-      baseURL: config.baseURL,
-      withCredentials: config.withCredentials
-    });
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+      config.headers['Content-Type'] = 'application/json';
+    }
     return config;
   },
   (error) => {
-    console.error('Request Error:', {
-      message: error.message,
-      stack: error.stack
-    });
     return Promise.reject(error);
   }
 );
 
-// Add response interceptor
+// Add a response interceptor to handle 401 errors
 server.interceptors.response.use(
-  (response) => {
-    console.log('API Response Success:', {
-      url: response.config.url,
-      status: response.status,
-      statusText: response.statusText
-    });
-    return response;
-  },
+  (response) => response,
   (error) => {
-    console.error('API Error:', {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-      url: error.config?.url,
-      method: error.config?.method,
-      stack: error.stack
-    });
+    if (error.response && error.response.status === 401) {
+      // Clear the token and redirect to login
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
     return Promise.reject(error);
   }
 );

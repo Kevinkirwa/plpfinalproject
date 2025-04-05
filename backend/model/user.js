@@ -60,6 +60,9 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  verificationToken: {
+    type: String,
+  },
   otp: {
     type: Number,
   },
@@ -72,7 +75,7 @@ const userSchema = new mongoose.Schema({
   },
   resetPasswordToken: String,
   resetPasswordTime: Date,
-});
+}, { timestamps: true });
 
 
 //  Hash password

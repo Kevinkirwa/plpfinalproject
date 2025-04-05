@@ -18,9 +18,12 @@ router.post("/create-user", async (req, res, next) => {
       return next(new ErrorHandler("User already exists", 400));
     }
 
-    // Generate OTP
-    const otp = Math.floor(100000 + Math.random() * 900000);
-    const otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+    // Generate verification token
+    const verificationToken = jwt.sign(
+      { email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
 
     const user = {
       name: name,
@@ -30,20 +33,26 @@ router.post("/create-user", async (req, res, next) => {
         public_id: "default",
         url: "https://res.cloudinary.com/demo/image/upload/v1/default-avatar.png"
       },
-      otp: otp,
-      otpExpiry: otpExpiry,
+      verificationToken: verificationToken,
       isVerified: false
     };
 
-    // Save user with OTP
+    // Save user with verification token
     const newUser = await User.create(user);
 
-    // Send OTP via email
+    // Send verification link via email
+    const verificationLink = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
     try {
       await sendMail({
         email: user.email,
         subject: "Verify your account",
-        html: `Your verification code is: ${otp}. This code will expire in 10 minutes.`
+        html: `
+          <h2>Welcome to our platform!</h2>
+          <p>Please click the link below to verify your email address:</p>
+          <a href="${verificationLink}" style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a>
+          <p>This link will expire in 1 hour.</p>
+          <p>If you did not create an account, please ignore this email.</p>
+        `
       });
     } catch (error) {
       console.error("Error sending email:", error);
@@ -94,86 +103,6 @@ router.post(
       }
 
       sendToken(user, 201, res);
-    } catch (error) {
-      return next(new ErrorHandler(error.message, 500));
-    }
-  })
-);
-
-// verify OTP
-router.post(
-  "/verify-otp",
-  catchAsyncErrors(async (req, res, next) => {
-    try {
-      const { userId, otp } = req.body;
-
-      const user = await User.findById(userId);
-
-      if (!user) {
-        return next(new ErrorHandler("User not found", 400));
-      }
-
-      if (user.isVerified) {
-        return next(new ErrorHandler("User already verified", 400));
-      }
-
-      if (user.otp !== otp) {
-        return next(new ErrorHandler("Invalid OTP", 400));
-      }
-
-      if (Date.now() > user.otpExpiry) {
-        return next(new ErrorHandler("OTP has expired", 400));
-      }
-
-      // Update user verification status
-      user.isVerified = true;
-      user.otp = undefined;
-      user.otpExpiry = undefined;
-      await user.save();
-
-      sendToken(user, 201, res);
-    } catch (error) {
-      return next(new ErrorHandler(error.message, 500));
-    }
-  })
-);
-
-// resend OTP
-router.post(
-  "/resend-otp",
-  catchAsyncErrors(async (req, res, next) => {
-    try {
-      const { userId } = req.body;
-
-      const user = await User.findById(userId);
-
-      if (!user) {
-        return next(new ErrorHandler("User not found", 400));
-      }
-
-      if (user.isVerified) {
-        return next(new ErrorHandler("User already verified", 400));
-      }
-
-      // Generate new OTP
-      const otp = Math.floor(100000 + Math.random() * 900000);
-      const otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
-
-      user.otp = otp;
-      user.otpExpiry = otpExpiry;
-      await user.save();
-
-      // Send new OTP via email
-      await sendMail({
-        email: user.email,
-        subject: "Verify your account",
-        html: `Your new verification code is: ${otp}. This code will expire in 10 minutes.`
-      });
-
-      res.status(200).json({
-        success: true,
-        message: "New verification code sent to your email!",
-      });
     } catch (error) {
       return next(new ErrorHandler(error.message, 500));
     }
@@ -501,5 +430,52 @@ router.post("/create-admin", async (req, res, next) => {
     return next(new ErrorHandler(error.message, 400));
   }
 });
+
+// verify email via link
+router.get(
+  "/verify-email",
+  catchAsyncErrors(async (req, res, next) => {
+    try {
+      const { token } = req.query;
+
+      if (!token) {
+        return next(new ErrorHandler("Invalid verification link", 400));
+      }
+
+      // Verify token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findOne({ email: decoded.email });
+
+      if (!user) {
+        return next(new ErrorHandler("User not found", 400));
+      }
+
+      if (user.isVerified) {
+        return next(new ErrorHandler("Email already verified", 400));
+      }
+
+      // Update user verification status
+      user.isVerified = true;
+      user.verificationToken = undefined;
+      await user.save();
+
+      // Return success response
+      res.status(200).json({
+        success: true,
+        message: "Email verified successfully!",
+        user: {
+          name: user.name,
+          email: user.email,
+          isVerified: user.isVerified
+        }
+      });
+    } catch (error) {
+      if (error.name === "TokenExpiredError") {
+        return next(new ErrorHandler("Verification link has expired", 400));
+      }
+      return next(new ErrorHandler("Invalid verification link", 400));
+    }
+  })
+);
 
 module.exports = router;

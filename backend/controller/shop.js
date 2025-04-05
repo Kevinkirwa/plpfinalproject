@@ -9,147 +9,108 @@ const cloudinary = require("cloudinary");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const ErrorHandler = require("../utils/ErrorHandler");
 const sendShopToken = require("../utils/shopToken");
+const User = require("../model/user");
 
 // create shop
-router.post("/create-shop", catchAsyncErrors(async (req, res, next) => {
+router.post("/create-shop", async (req, res, next) => {
   try {
-    console.log("Received shop creation request:", {
-      name: req.body.name,
-      email: req.body.email,
-      phoneNumber: req.body.phoneNumber,
-      address: req.body.address,
-      zipCode: req.body.zipCode,
-      hasAvatar: !!req.body.avatar,
-      avatarLength: req.body.avatar ? req.body.avatar.length : 0
-    });
+    const { name, email, password, address, phoneNumber, zipCode } = req.body;
+    const sellerEmail = await User.findOne({ email });
 
-    // Validate required fields
-    const requiredFields = ['name', 'email', 'password', 'phoneNumber', 'address', 'zipCode', 'avatar'];
-    const missingFields = requiredFields.filter(field => !req.body[field]);
-    
-    if (missingFields.length > 0) {
-      return next(new ErrorHandler(`Missing required fields: ${missingFields.join(', ')}`, 400));
-    }
-
-    const { email } = req.body;
-    const sellerEmail = await Shop.findOne({ email });
     if (sellerEmail) {
       return next(new ErrorHandler("User already exists", 400));
     }
 
-    // Validate avatar data
-    if (!req.body.avatar || !req.body.avatar.startsWith('data:image')) {
-      return next(new ErrorHandler("Invalid avatar format. Must be a valid base64 image", 400));
-    }
+    // Generate verification token
+    const verificationToken = jwt.sign(
+      { email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
 
+    const seller = {
+      name: name,
+      email: email,
+      password: password,
+      phoneNumber: phoneNumber,
+      address: address,
+      zipCode: zipCode,
+      role: "Seller",
+      verificationToken: verificationToken,
+      isVerified: false
+    };
+
+    // Save seller with verification token
+    const newSeller = await User.create(seller);
+
+    // Send verification link via email
+    const verificationLink = `${process.env.FRONTEND_URL}/verify-shop?token=${verificationToken}`;
     try {
-      // Upload to Cloudinary with explicit format and transformation
-      const myCloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
-        folder: "avatars",
-        format: 'webp',
-        transformation: [
-          { width: 150, height: 150, crop: 'fill' },
-          { quality: 'auto:good' }
-        ]
+      await sendMail({
+        email: seller.email,
+        subject: "Verify your shop account",
+        html: `
+          <h2>Welcome to our platform!</h2>
+          <p>Please click the link below to verify your shop account:</p>
+          <a href="${verificationLink}" style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Verify Shop</a>
+          <p>This link will expire in 1 hour.</p>
+          <p>If you did not create a shop account, please ignore this email.</p>
+        `
       });
-
-      console.log("Cloudinary upload successful:", {
-        public_id: myCloud.public_id,
-        url: myCloud.secure_url
-      });
-
-      // Generate OTP
-      const otp = Math.floor(100000 + Math.random() * 900000);
-      const otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
-
-      // Create seller object with validated data
-      const seller = {
-        name: req.body.name.trim(),
-        email: email.toLowerCase().trim(),
-        password: req.body.password,
-        avatar: {
-          public_id: myCloud.public_id,
-          url: myCloud.secure_url,
-        },
-        address: req.body.address.trim(),
-        phoneNumber: parseInt(req.body.phoneNumber.toString().replace(/[^0-9]/g, ''), 10),
-        zipCode: parseInt(req.body.zipCode.toString().replace(/[^0-9]/g, ''), 10),
-        otp,
-        otpExpiry,
-        isVerified: false
-      };
-
-      // Save seller with OTP
-      const newSeller = await Shop.create(seller);
-      console.log("New seller created:", {
-        id: newSeller._id,
-        email: newSeller.email
-      });
-
-      // Send OTP via email
-      try {
-        await sendMail({
-          email: seller.email,
-          subject: "Verify your Shop",
-          message: `Hello ${seller.name}, your verification code is: ${otp}. This code will expire in 10 minutes.`,
-        });
-        console.log("Verification email sent successfully");
-        
-        res.status(201).json({
-          success: true,
-          message: `Please check your email for the verification code!`,
-          sellerId: newSeller._id
-        });
-      } catch (error) {
-        console.error("Error sending verification email:", error);
-        // Delete the created shop if email fails
-        await Shop.findByIdAndDelete(newSeller._id);
-        return next(new ErrorHandler("Failed to send verification email. Please try again.", 500));
-      }
     } catch (error) {
-      console.error("Error in Cloudinary upload:", error);
-      return next(new ErrorHandler("Error uploading shop avatar: " + error.message, 400));
+      console.error("Error sending email:", error);
+      return next(new ErrorHandler("Error sending verification email", 500));
     }
+
+    res.status(201).json({
+      success: true,
+      message: "Please check your email to verify your shop account",
+      seller: {
+        name: newSeller.name,
+        email: newSeller.email,
+        isVerified: newSeller.isVerified
+      }
+    });
   } catch (error) {
-    console.error("Error in shop creation:", error);
     return next(new ErrorHandler(error.message, 400));
   }
-}));
+});
 
-// verify OTP
-router.post(
-  "/verify-otp",
+// verify shop via link
+router.get(
+  "/verify-shop",
   catchAsyncErrors(async (req, res, next) => {
     try {
-      const { sellerId, otp } = req.body;
+      const { token } = req.query;
 
-      const seller = await Shop.findById(sellerId);
+      if (!token) {
+        return next(new ErrorHandler("Invalid verification link", 400));
+      }
+
+      // Verify token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const seller = await User.findOne({ email: decoded.email });
 
       if (!seller) {
         return next(new ErrorHandler("Seller not found", 400));
       }
 
       if (seller.isVerified) {
-        return next(new ErrorHandler("Seller already verified", 400));
-      }
-
-      if (seller.otp !== Number(otp)) {
-        return next(new ErrorHandler("Invalid OTP", 400));
-      }
-
-      if (Date.now() > seller.otpExpiry) {
-        return next(new ErrorHandler("OTP has expired", 400));
+        return next(new ErrorHandler("Shop already verified", 400));
       }
 
       // Update seller verification status
       seller.isVerified = true;
-      seller.otp = undefined;
-      seller.otpExpiry = undefined;
+      seller.verificationToken = undefined;
       await seller.save();
 
-      sendShopToken(seller, 201, res);
+      // Redirect to frontend with success message
+      res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
     } catch (error) {
-      return next(new ErrorHandler(error.message, 500));
+      if (error.name === "TokenExpiredError") {
+        return next(new ErrorHandler("Verification link has expired", 400));
+      }
+      return next(new ErrorHandler("Invalid verification link", 400));
     }
   })
 );
