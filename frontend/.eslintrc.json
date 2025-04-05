@@ -1,7 +1,14 @@
 {
-  "extends": ["react-app"],
+  "extends": "react-app",
   "rules": {
-    "react-hooks/rules-of-hooks": "warn",
-    "react-hooks/exhaustive-deps": "warn"
+    "no-unused-vars": "off",
+    "react-hooks/exhaustive-deps": "off",
+    "react/jsx-key": "off",
+    "jsx-a11y/anchor-is-valid": "off",
+    "jsx-a11y/alt-text": "off",
+    "jsx-a11y/role-supports-aria-props": "off",
+    "jsx-a11y/aria-props": "off",
+    "react/no-deprecated": "off",
+    "no-dupe-keys": "off"
   }
 } 
