@@ -43,14 +43,33 @@ app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // CORS configuration
+const isProduction = process.env.NODE_ENV === 'production';
+console.log('Environment Check:', {
+  NODE_ENV: process.env.NODE_ENV,
+  isProduction: isProduction
+});
+
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   console.log('CORS Debug - Request Origin:', origin);
   console.log('CORS Debug - Request Method:', req.method);
-  console.log('CORS Debug - Request Headers:', req.headers);
   
   // Set CORS headers
-  res.header('Access-Control-Allow-Origin', origin || '*');
+  if (isProduction) {
+    // In production, only allow specific origins
+    const allowedOrigins = [
+      'https://plpfinalproject.vercel.app',
+      'https://plpfinalproject-git-main-kirwas-projects.vercel.app'
+    ];
+    
+    if (allowedOrigins.includes(origin)) {
+      res.header('Access-Control-Allow-Origin', origin);
+    }
+  } else {
+    // In development, allow any origin
+    res.header('Access-Control-Allow-Origin', origin || '*');
+  }
+  
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
