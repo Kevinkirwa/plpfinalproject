@@ -431,51 +431,40 @@ router.post("/create-admin", async (req, res, next) => {
   }
 });
 
-// verify email via link
-router.get(
-  "/verify-email",
-  catchAsyncErrors(async (req, res, next) => {
-    try {
-      const { token } = req.query;
-
-      if (!token) {
-        return next(new ErrorHandler("Invalid verification link", 400));
-      }
-
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findOne({ email: decoded.email });
-
-      if (!user) {
-        return next(new ErrorHandler("User not found", 400));
-      }
-
-      if (user.isVerified) {
-        return next(new ErrorHandler("Email already verified", 400));
-      }
-
-      // Update user verification status
-      user.isVerified = true;
-      user.verificationToken = undefined;
-      await user.save();
-
-      // Return success response
-      res.status(200).json({
-        success: true,
-        message: "Email verified successfully!",
-        user: {
-          name: user.name,
-          email: user.email,
-          isVerified: user.isVerified
-        }
-      });
-    } catch (error) {
-      if (error.name === "TokenExpiredError") {
-        return next(new ErrorHandler("Verification link has expired", 400));
-      }
-      return next(new ErrorHandler("Invalid verification link", 400));
+// Verify email
+router.get("/verify-email", catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { token } = req.query;
+    
+    if (!token) {
+      return next(new ErrorHandler("Verification token is required", 400));
     }
-  })
-);
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Find user by email
+    const user = await User.findOne({ email: decoded.email });
+    
+    if (!user) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+
+    // Update user verification status
+    user.isVerified = true;
+    user.verificationToken = undefined;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Email verified successfully"
+    });
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return next(new ErrorHandler("Verification token has expired", 400));
+    }
+    return next(new ErrorHandler("Invalid verification token", 400));
+  }
+}));
 
 module.exports = router;
