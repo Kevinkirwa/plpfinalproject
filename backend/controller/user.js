@@ -435,6 +435,7 @@ router.post("/create-admin", async (req, res, next) => {
 router.get("/verify-email", catchAsyncErrors(async (req, res, next) => {
   try {
     const { token } = req.query;
+    console.log('Verification token:', token);
     
     if (!token) {
       return next(new ErrorHandler("Verification token is required", 400));
@@ -442,9 +443,11 @@ router.get("/verify-email", catchAsyncErrors(async (req, res, next) => {
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('Decoded token:', decoded);
     
     // Find user by email
     const user = await User.findOne({ email: decoded.email });
+    console.log('Found user:', user ? 'yes' : 'no');
     
     if (!user) {
       return next(new ErrorHandler("User not found", 404));
@@ -460,6 +463,7 @@ router.get("/verify-email", catchAsyncErrors(async (req, res, next) => {
       message: "Email verified successfully"
     });
   } catch (error) {
+    console.error('Verification error:', error);
     if (error.name === 'TokenExpiredError') {
       return next(new ErrorHandler("Verification token has expired", 400));
     }
