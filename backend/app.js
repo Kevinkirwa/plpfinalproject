@@ -46,41 +46,30 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const allowedOrigins = process.env.NODE_ENV === 'production'
   ? [
       'https://plpfinalproject-git-main-kirwas-projects.vercel.app',
-      'https://plpfinalproject.vercel.app'
+      'https://plpfinalproject.vercel.app',
+      'https://plpfinalproject-2.onrender.com'
     ]
   : ['http://localhost:3000'];
 
 console.log('Environment:', process.env.NODE_ENV);
 console.log('Allowed Origins:', allowedOrigins);
 
-app.use(
-  cors({
-    origin: function(origin, callback) {
-      // allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      
-      if (allowedOrigins.indexOf(origin) === -1) {
-        const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-        console.log('Blocked Origin:', origin);
-        return callback(new Error(msg), false);
-      }
-      
-      console.log('Allowed Origin:', origin);
-      return callback(null, true);
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Requested-With",
-      "Accept",
-      "Origin",
-      "Access-Control-Allow-Credentials"
-    ],
-    exposedHeaders: ["set-cookie"]
-  })
-);
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      console.error('CORS Error:', { origin, allowedOrigins });
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+}));
 
 // import routes
 const user = require("./controller/user");
