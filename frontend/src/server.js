@@ -19,8 +19,12 @@ console.log('Socket URL:', SOCKET_URL);
 
 // Create axios instance with base URL
 const server = axios.create({
-  baseURL: `${API_URL}/api/v2`,
+  baseURL: API_URL + '/api/v2',
   withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  }
 });
 
 // Add a request interceptor to add the token to all requests
@@ -29,21 +33,21 @@ server.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      config.headers['Content-Type'] = 'application/json';
     }
     return config;
   },
   (error) => {
+    console.error('Request error:', error);
     return Promise.reject(error);
   }
 );
 
-// Add a response interceptor to handle 401 errors
+// Add a response interceptor to handle errors
 server.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.error('Response error:', error.response?.data || error.message);
     if (error.response && error.response.status === 401) {
-      // Clear the token and redirect to login
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
@@ -51,8 +55,6 @@ server.interceptors.response.use(
   }
 );
 
-// Export both as default and named export
-export { server };
 export default server;
 
 
