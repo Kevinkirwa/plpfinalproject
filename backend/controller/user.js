@@ -8,6 +8,14 @@ const sendMail = require("../utils/sendMail");
 const sendToken = require("../utils/jwtToken");
 const { isAuthenticated, isAdmin } = require("../middleware/auth");
 
+// Test endpoint
+router.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "User API is working"
+  });
+});
+
 // create user
 router.post("/create-user", async (req, res, next) => {
   try {
