@@ -51,25 +51,28 @@ const allowedOrigins = process.env.NODE_ENV === 'production'
     ]
   : ['http://localhost:3000'];
 
+// Log environment and CORS configuration
 console.log('Environment:', process.env.NODE_ENV);
 console.log('Allowed Origins:', allowedOrigins);
 
-app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      console.error('CORS Error:', { origin, allowedOrigins });
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
-}));
+// CORS middleware
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  console.log('Request Origin:', origin);
+  
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  }
+  
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  
+  next();
+});
 
 // import routes
 const user = require("./controller/user");
