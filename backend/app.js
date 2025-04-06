@@ -43,16 +43,30 @@ app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // CORS configuration
-app.use(cors({
-  origin: true, // Allow all origins
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  exposedHeaders: ['set-cookie']
-}));
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  console.log('CORS Debug - Request Origin:', origin);
+  console.log('CORS Debug - Request Method:', req.method);
+  console.log('CORS Debug - Request Headers:', req.headers);
+  
+  // Set CORS headers
+  res.header('Access-Control-Allow-Origin', origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    console.log('CORS Debug - Handling OPTIONS request');
+    return res.sendStatus(200);
+  }
+  
+  next();
+});
 
 // Log environment
 console.log('Environment:', process.env.NODE_ENV);
+console.log('CORS Configuration - Debug Mode Enabled');
 
 // import routes
 const user = require("./controller/user");
