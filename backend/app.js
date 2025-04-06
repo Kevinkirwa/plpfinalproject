@@ -115,29 +115,32 @@ app.use("/api/v2/mpesa", mpesa);
 app.use("/api/v2/withdraw", withdraw);
 app.use("/api/v2/contact", contactRoute);
 
-// Log mounted routes
-console.log('Mounted Routes:', {
-  user: '/api/v2/user',
-  conversation: '/api/v2/conversation',
-  message: '/api/v2/message',
-  order: '/api/v2/order',
-  shop: '/api/v2/shop',
-  product: '/api/v2/product',
-  event: '/api/v2/event',
-  coupon: '/api/v2/coupon',
-  payment: '/api/v2/payment',
-  mpesa: '/api/v2/mpesa',
-  withdraw: '/api/v2/withdraw',
-  contact: '/api/v2/contact'
-});
-
-// Add a catch-all route for debugging
+// Add request logging middleware
 app.use((req, res, next) => {
-  console.log('Request received:', {
+  console.log('Incoming request:', {
     method: req.method,
     path: req.path,
     query: req.query,
     headers: req.headers
+  });
+  next();
+});
+
+// Add route debugging middleware
+app.use((req, res, next) => {
+  console.log('Available routes:', {
+    user: '/api/v2/user',
+    conversation: '/api/v2/conversation',
+    message: '/api/v2/message',
+    order: '/api/v2/order',
+    shop: '/api/v2/shop',
+    product: '/api/v2/product',
+    event: '/api/v2/event',
+    coupon: '/api/v2/coupon',
+    payment: '/api/v2/payment',
+    mpesa: '/api/v2/mpesa',
+    withdraw: '/api/v2/withdraw',
+    contact: '/api/v2/contact'
   });
   next();
 });
