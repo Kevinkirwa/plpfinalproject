@@ -58,12 +58,16 @@ router.post("/create-shop", async (req, res, next) => {
     // Save seller with verification token
     const newSeller = await User.create(seller);
 
-    // Get the correct frontend URL
-    const frontendUrl = process.env.FRONTEND_URL || process.env.FRONTEND_PRODUCTION_URL;
-    if (!frontendUrl) {
-      console.error("Frontend URL is not defined in environment variables");
-      return next(new ErrorHandler("Server configuration error", 500));
-    }
+    // Get the correct frontend URL with fallbacks
+    const frontendUrl = process.env.FRONTEND_URL || 
+                       process.env.FRONTEND_PRODUCTION_URL || 
+                       "https://plpfinalproject.vercel.app";
+
+    console.log("Environment variables:", {
+      FRONTEND_URL: process.env.FRONTEND_URL,
+      FRONTEND_PRODUCTION_URL: process.env.FRONTEND_PRODUCTION_URL,
+      NODE_ENV: process.env.NODE_ENV
+    });
 
     // Send verification link via email
     const verificationLink = `${frontendUrl}/verify-shop?token=${verificationToken}`;
