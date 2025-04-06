@@ -20,43 +20,29 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Log environment variables (without sensitive data)
-console.log('Environment:', {
-  NODE_ENV: process.env.NODE_ENV,
-  PORT: process.env.PORT,
-  MONGODB_URL: process.env.MONGODB_URL ? "Set" : "Not set",
-  CLOUDINARY_NAME: process.env.CLOUDINARY_NAME ? "Set" : "Not set",
-  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY ? "Set" : "Not set",
-  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET ? "Set" : "Not set",
-  hasMpesaKey: !!process.env.MPESA_CONSUMER_KEY,
-  hasMpesaSecret: !!process.env.MPESA_CONSUMER_SECRET,
-  hasMpesaPasskey: !!process.env.MPESA_PASSKEY,
-  hasMpesaShortcode: !!process.env.MPESA_SHORTCODE,
-  hasMpesaCallback: !!process.env.MPESA_CALLBACK_URL
-});
-
 app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 
-// Serve static files from uploads directory
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// CORS configuration
+// CORS configuration - MOVED TO TOP
 const isProduction = process.env.NODE_ENV === 'production';
-console.log('Environment Check:', {
+console.log('CORS Configuration:', {
   NODE_ENV: process.env.NODE_ENV,
   isProduction: isProduction
 });
 
+// Add CORS middleware before routes
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  console.log('CORS Debug - Request Origin:', origin);
-  console.log('CORS Debug - Request Method:', req.method);
+  console.log('CORS Debug:', {
+    origin: origin,
+    method: req.method,
+    path: req.path
+  });
   
   // Set CORS headers
   if (isProduction) {
-    // In production, only allow specific origins
+    // In production, allow specific origins
     const allowedOrigins = [
       'https://plpfinalproject.vercel.app',
       'https://plpfinalproject-git-main-kirwas-projects.vercel.app'
@@ -76,16 +62,15 @@ app.use((req, res, next) => {
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    console.log('CORS Debug - Handling OPTIONS request');
+    console.log('Handling OPTIONS request');
     return res.sendStatus(200);
   }
   
   next();
 });
 
-// Log environment
-console.log('Environment:', process.env.NODE_ENV);
-console.log('CORS Configuration - Debug Mode Enabled');
+// Serve static files from uploads directory
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // import routes
 const user = require("./controller/user");
@@ -117,7 +102,7 @@ app.use("/api/v2/contact", contactRoute);
 
 // Add request logging middleware
 app.use((req, res, next) => {
-  console.log('Incoming request:', {
+  console.log('Request received:', {
     method: req.method,
     path: req.path,
     query: req.query,
@@ -126,23 +111,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// Add route debugging middleware
-app.use((req, res, next) => {
-  console.log('Available routes:', {
-    user: '/api/v2/user',
-    conversation: '/api/v2/conversation',
-    message: '/api/v2/message',
-    order: '/api/v2/order',
-    shop: '/api/v2/shop',
-    product: '/api/v2/product',
-    event: '/api/v2/event',
-    coupon: '/api/v2/coupon',
-    payment: '/api/v2/payment',
-    mpesa: '/api/v2/mpesa',
-    withdraw: '/api/v2/withdraw',
-    contact: '/api/v2/contact'
+// Add catch-all route for unmatched routes
+app.use((req, res) => {
+  console.log('No route matched for:', req.method, req.path);
+  res.status(404).json({
+    success: false,
+    message: `Cannot ${req.method} ${req.path}`
   });
-  next();
 });
 
 // it's for ErrorHandling
