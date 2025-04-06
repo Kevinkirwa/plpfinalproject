@@ -101,6 +101,7 @@ const message = require("./controller/message");
 const withdraw = require("./controller/withdraw");
 const contactRoute = require("./routes/contactRoute");
 
+// Mount routes
 app.use("/api/v2/user", user);
 app.use("/api/v2/conversation", conversation);
 app.use("/api/v2/message", message);
@@ -113,6 +114,22 @@ app.use("/api/v2/payment", payment);
 app.use("/api/v2/mpesa", mpesa);
 app.use("/api/v2/withdraw", withdraw);
 app.use("/api/v2/contact", contactRoute);
+
+// Log mounted routes
+console.log('Mounted Routes:', {
+  user: '/api/v2/user',
+  conversation: '/api/v2/conversation',
+  message: '/api/v2/message',
+  order: '/api/v2/order',
+  shop: '/api/v2/shop',
+  product: '/api/v2/product',
+  event: '/api/v2/event',
+  coupon: '/api/v2/coupon',
+  payment: '/api/v2/payment',
+  mpesa: '/api/v2/mpesa',
+  withdraw: '/api/v2/withdraw',
+  contact: '/api/v2/contact'
+});
 
 // it's for ErrorHandling
 app.use(errorMiddleware);
