@@ -86,11 +86,13 @@ const ShopCreate = () => {
       // Additional validation
       if (cleanedData.phoneNumber.length < 10) {
         toast.error("Please enter a valid phone number");
+        setLoading(false);
         return;
       }
 
       if (cleanedData.zipCode.length < 4) {
         toast.error("Please enter a valid zip code");
+        setLoading(false);
         return;
       }
 
@@ -100,6 +102,7 @@ const ShopCreate = () => {
 
       if (!avatar || !avatar.startsWith('data:image')) {
         toast.error("Please upload a valid image file");
+        setLoading(false);
         return;
       }
 
@@ -109,9 +112,7 @@ const ShopCreate = () => {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
-        },
-        maxBodyLength: Infinity,
-        maxContentLength: Infinity
+        }
       });
 
       console.log("ShopCreate - Server response:", response.data);

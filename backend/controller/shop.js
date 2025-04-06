@@ -14,11 +14,22 @@ const User = require("../model/user");
 // create shop
 router.post("/create-shop", async (req, res, next) => {
   try {
-    const { name, email, password, address, phoneNumber, zipCode } = req.body;
+    const { name, email, password, address, phoneNumber, zipCode, avatar } = req.body;
     const sellerEmail = await User.findOne({ email });
 
     if (sellerEmail) {
       return next(new ErrorHandler("User already exists", 400));
+    }
+
+    // Upload avatar to Cloudinary
+    let avatarResult;
+    try {
+      avatarResult = await cloudinary.v2.uploader.upload(avatar, {
+        folder: "shop-avatars",
+      });
+    } catch (error) {
+      console.error("Cloudinary upload error:", error);
+      return next(new ErrorHandler("Error uploading shop avatar", 400));
     }
 
     // Generate verification token
@@ -37,7 +48,11 @@ router.post("/create-shop", async (req, res, next) => {
       zipCode: zipCode,
       role: "Seller",
       verificationToken: verificationToken,
-      isVerified: false
+      isVerified: false,
+      avatar: {
+        public_id: avatarResult.public_id,
+        url: avatarResult.secure_url
+      }
     };
 
     // Save seller with verification token
@@ -72,6 +87,7 @@ router.post("/create-shop", async (req, res, next) => {
       }
     });
   } catch (error) {
+    console.error("Shop creation error:", error);
     return next(new ErrorHandler(error.message, 400));
   }
 });
