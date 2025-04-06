@@ -131,6 +131,17 @@ console.log('Mounted Routes:', {
   contact: '/api/v2/contact'
 });
 
+// Add a catch-all route for debugging
+app.use((req, res, next) => {
+  console.log('Request received:', {
+    method: req.method,
+    path: req.path,
+    query: req.query,
+    headers: req.headers
+  });
+  next();
+});
+
 // it's for ErrorHandling
 app.use(errorMiddleware);
 
