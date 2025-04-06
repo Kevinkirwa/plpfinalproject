@@ -7,6 +7,8 @@ import server from "../server";
 const ActivationPage = () => {
   const { activation_token } = useParams();
   const [error, setError] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -14,15 +16,21 @@ const ActivationPage = () => {
       const sendRequest = async () => {
         try {
           console.log('Verifying email with token:', activation_token);
-          const response = await axios.get(`${server}/api/v2/user/verify-email?token=${activation_token}`);
+          const response = await axios.get(
+            `${server}/api/v2/user/verify-email?token=${activation_token}`
+          );
           console.log('Verification response:', response.data);
-          // Redirect to login page after successful verification
+          setSuccess(true);
+          setMessage("Email verified successfully! Redirecting to login...");
           setTimeout(() => {
-            navigate('/login');
+            navigate("/login");
           }, 3000);
-        } catch (err) {
-          console.error('Verification error:', err);
+        } catch (error) {
+          console.error('Verification error:', error);
           setError(true);
+          setMessage(
+            error.response?.data?.message || "Failed to verify email. Please try again."
+          );
         }
       };
       sendRequest();
@@ -42,9 +50,9 @@ const ActivationPage = () => {
       }}
     >
       {error ? (
-        <p>Your verification token is invalid or has expired!</p>
+        <p>{message}</p>
       ) : (
-        <p>Your email has been verified successfully! Redirecting to login...</p>
+        <p>{message}</p>
       )}
     </div>
   );
