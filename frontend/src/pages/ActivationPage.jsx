@@ -13,7 +13,8 @@ const ActivationPage = () => {
     if (activation_token) {
       const sendRequest = async () => {
         try {
-          const response = await axios.get(`${server}/user/verify-email?token=${activation_token}`);
+          console.log('Verifying email with token:', activation_token);
+          const response = await axios.get(`${server}/api/v2/user/verify-email?token=${activation_token}`);
           console.log('Verification response:', response.data);
           // Redirect to login page after successful verification
           setTimeout(() => {
