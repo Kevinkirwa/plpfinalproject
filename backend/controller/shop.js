@@ -58,8 +58,17 @@ router.post("/create-shop", async (req, res, next) => {
     // Save seller with verification token
     const newSeller = await User.create(seller);
 
+    // Get the correct frontend URL
+    const frontendUrl = process.env.FRONTEND_URL || process.env.FRONTEND_PRODUCTION_URL;
+    if (!frontendUrl) {
+      console.error("Frontend URL is not defined in environment variables");
+      return next(new ErrorHandler("Server configuration error", 500));
+    }
+
     // Send verification link via email
-    const verificationLink = `${process.env.FRONTEND_URL}/verify-shop?token=${verificationToken}`;
+    const verificationLink = `${frontendUrl}/verify-shop?token=${verificationToken}`;
+    console.log("Generated verification link:", verificationLink);
+    
     try {
       await sendMail({
         email: seller.email,
