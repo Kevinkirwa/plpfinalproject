@@ -43,35 +43,43 @@ app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // CORS configuration
-const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [
-      'https://plpfinalproject-git-main-kirwas-projects.vercel.app',
-      'https://plpfinalproject.vercel.app',
-      'https://plpfinalproject-2.onrender.com'
-    ]
-  : ['http://localhost:3000'];
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = process.env.NODE_ENV === 'production'
+      ? [
+          'https://plpfinalproject-git-main-kirwas-projects.vercel.app',
+          'https://plpfinalproject.vercel.app',
+          'https://plpfinalproject-2.onrender.com'
+        ]
+      : ['http://localhost:3000'];
+    
+    console.log('Request Origin:', origin);
+    console.log('Allowed Origins:', allowedOrigins);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['set-cookie']
+};
 
-// Log environment and CORS configuration
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Log environment
 console.log('Environment:', process.env.NODE_ENV);
-console.log('Allowed Origins:', allowedOrigins);
-
-// CORS middleware
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  console.log('Request Origin:', origin);
-  
-  if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
-  }
-  
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  
-  next();
+console.log('CORS Options:', {
+  origin: corsOptions.origin.toString(),
+  credentials: corsOptions.credentials,
+  methods: corsOptions.methods
 });
 
 // import routes
