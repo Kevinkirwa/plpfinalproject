@@ -45,7 +45,8 @@ app.use((req, res, next) => {
     // In production, allow specific origins
     const allowedOrigins = [
       'https://plpfinalproject.vercel.app',
-      'https://plpfinalproject-git-main-kirwas-projects.vercel.app'
+      'https://plpfinalproject-git-main-kirwas-projects.vercel.app',
+      'http://localhost:3000'  // Add localhost for development
     ];
     
     if (allowedOrigins.includes(origin)) {
