@@ -210,7 +210,14 @@ router.post(
         return next(new ErrorHandler("Invalid credentials", 400));
       }
 
-      sendShopToken(shop, 201, res);
+      // Generate token
+      const token = shop.getJwtToken();
+
+      res.status(200).json({
+        success: true,
+        token,
+        shop
+      });
     } catch (error) {
       return next(new ErrorHandler(error.message, 500));
     }

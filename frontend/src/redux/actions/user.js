@@ -60,16 +60,20 @@ export const loadSeller = () => async (dispatch) => {
       type: "LoadSellerRequest",
     });
 
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('seller_token');
     if (!token) {
       dispatch({
         type: "LoadSellerFail",
-        payload: "No token found",
+        payload: "No seller token found",
       });
       return null;
     }
 
-    const { data } = await server.get("/shop/getSeller");
+    const { data } = await server.get("/shop/getSeller", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
     
     if (data?.seller) {
       dispatch({
@@ -87,7 +91,7 @@ export const loadSeller = () => async (dispatch) => {
   } catch (error) {
     // If token is invalid, clear it
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
+      localStorage.removeItem('seller_token');
     }
     
     dispatch({
