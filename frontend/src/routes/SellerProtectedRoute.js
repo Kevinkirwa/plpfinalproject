@@ -4,24 +4,16 @@ import Loader from "../components/Layout/Loader";
 
 const SellerProtectedRoute = ({ children }) => {
   const { isLoading, isSeller } = useSelector((state) => state.seller);
-  const { isAuthenticated } = useSelector((state) => state.user);
 
-  console.log("SellerProtectedRoute - Auth State:", { isLoading, isSeller, isAuthenticated });
+  console.log("SellerProtectedRoute - Auth State:", { isLoading, isSeller });
 
   if (isLoading) {
     return <Loader />;
   }
 
-  if (!isAuthenticated) {
-    console.log("SellerProtectedRoute - Not authenticated, redirecting to login");
-    return <Navigate to="/login" replace />;
-  }
-
-  // Only redirect to shop-create if the user is authenticated but not a seller
-  // and trying to access seller-specific routes
   if (!isSeller) {
-    console.log("SellerProtectedRoute - Not a seller, redirecting to shop-create");
-    return <Navigate to="/shop-create" replace />;
+    console.log("SellerProtectedRoute - Not a seller, redirecting to shop-login");
+    return <Navigate to="/shop-login" replace />;
   }
 
   console.log("SellerProtectedRoute - Authenticated seller, rendering protected content");
