@@ -6,7 +6,16 @@ const Shop = require("../model/shop");
 
 exports.isAuthenticated = catchAsyncErrors(async(req, res, next) => {
     try {
-        const { token } = req.cookies;
+        // Try to get token from Authorization header first
+        const authHeader = req.headers.authorization;
+        let token;
+        
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.split(' ')[1];
+        } else {
+            // Fall back to cookie if no Authorization header
+            token = req.cookies.token;
+        }
 
         if (!token) {
             return next(new ErrorHandler("Please login to continue", 401));
