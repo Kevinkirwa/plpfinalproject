@@ -33,6 +33,9 @@ server.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Adding token to request:', config.url);
+    } else {
+      console.log('No token found for request:', config.url);
     }
     return config;
   },
@@ -47,14 +50,20 @@ server.interceptors.response.use(
   (response) => {
     // If this is a login response, store the token
     if (response.config.url === '/user/login-user' && response.data.token) {
+      console.log('Storing token from login response');
       localStorage.setItem('token', response.data.token);
     }
     return response;
   },
   (error) => {
-    console.error('Response error:', error.response?.data || error.message);
+    console.error('Response error:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      message: error.response?.data?.message || error.message
+    });
+    
     if (error.response && error.response.status === 401) {
-      // Clear token on unauthorized
+      console.log('Clearing token due to 401 response');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
     }

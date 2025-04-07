@@ -32,15 +32,22 @@ const Login = () => {
 
       if (response.data.success) {
         toast.success('Login successful!');
-        // Store user data in localStorage
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        // Store the token in localStorage
+        
+        // Store the token first
         localStorage.setItem('token', response.data.token);
         
-        // Load user data into Redux store
-        await dispatch(loadUser());
+        // Then load user data
+        const userData = await dispatch(loadUser());
         
-        navigate('/');
+        if (userData) {
+          // Store user data in localStorage only after successful load
+          localStorage.setItem('user', JSON.stringify(userData));
+          navigate('/');
+        } else {
+          // If user data couldn't be loaded, clear the token
+          localStorage.removeItem('token');
+          toast.error('Failed to load user data');
+        }
       }
     } catch (error) {
       console.error('Login error:', error);

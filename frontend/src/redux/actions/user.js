@@ -10,6 +10,7 @@ export const loadUser = () => async (dispatch) => {
 
     const token = localStorage.getItem('token');
     if (!token) {
+      console.log('No token found in loadUser');
       dispatch({
         type: "LoadUserFail",
         payload: "No token found",
@@ -17,13 +18,11 @@ export const loadUser = () => async (dispatch) => {
       return null;
     }
 
-    const { data } = await server.get("/user/getuser", {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    console.log('Loading user with token');
+    const { data } = await server.get("/user/getuser");
     
     if (data?.user) {
+      console.log('User loaded successfully');
       dispatch({
         type: "LoadUserSuccess",
         payload: data.user,
@@ -31,14 +30,17 @@ export const loadUser = () => async (dispatch) => {
       return data.user;
     }
     
+    console.log('No user data received');
     dispatch({
       type: "LoadUserFail",
       payload: "No user data received",
     });
     return null;
   } catch (error) {
+    console.error('Error loading user:', error);
     // If token is invalid, clear it
     if (error.response?.status === 401) {
+      console.log('Clearing token due to 401 in loadUser');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
     }
