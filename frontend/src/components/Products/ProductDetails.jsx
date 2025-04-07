@@ -29,14 +29,35 @@ const ProductDetails = ({ data }) => {
   const [select, setSelect] = useState(0);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    dispatch(getAllProductsShop(data && data?.shop._id));
-    if (wishlist && wishlist.find((i) => i._id === data?._id)) {
-      setClick(true);
-    } else {
-      setClick(false);
-    }
-  }, [data, wishlist]);
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        if (data?.shop?._id) {
+          await dispatch(getAllProductsShop(data.shop._id));
+        }
+        if (wishlist) {
+          setClick(wishlist.some((i) => i._id === data?._id));
+        }
+      } catch (error) {
+        console.error('Error loading product data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [data, wishlist, dispatch]);
+
+  if (!data || isLoading) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
   const incrementCount = () => {
     setCount(count + 1);
@@ -73,148 +94,144 @@ const ProductDetails = ({ data }) => {
     }
   };
 
-  const totalReviewsLength =
-    products &&
-    products.reduce((acc, product) => acc + product.reviews.length, 0);
+  const totalReviewsLength = products?.reduce((acc, product) => acc + (product.reviews?.length || 0), 0) || 0;
+  const totalRatings = products?.reduce(
+    (acc, product) => acc + (product.reviews?.reduce((sum, review) => sum + (review.rating || 0), 0) || 0),
+    0
+  ) || 0;
 
-  const totalRatings =
-    products &&
-    products.reduce(
-      (acc, product) =>
-        acc + product.reviews.reduce((sum, review) => sum + review.rating, 0),
-      0
-    );
-
-  const avg =  totalRatings / totalReviewsLength || 0;
-
-  const averageRating = avg.toFixed(2);
-
+  const averageRating = totalReviewsLength > 0 ? (totalRatings / totalReviewsLength).toFixed(2) : "0.00";
 
   const handleMessageSubmit = async () => {
-    if (isAuthenticated) {
+    if (!isAuthenticated) {
+      toast.error("Please login to create a conversation");
+      return;
+    }
+
+    try {
       const groupTitle = data._id + user._id;
       const userId = user._id;
       const sellerId = data.shop._id;
-      await axios
-        .post(`${server}/conversation/create-new-conversation`, {
-          groupTitle,
-          userId,
-          sellerId,
-        })
-        .then((res) => {
-          navigate(`/inbox?${res.data.conversation._id}`);
-        })
-        .catch((error) => {
-          toast.error(error.response.data.message);
-        });
-    } else {
-      toast.error("Please login to create a conversation");
+      
+      const response = await axios.post(`${server}/conversation/create-new-conversation`, {
+        groupTitle,
+        userId,
+        sellerId,
+      });
+      
+      navigate(`/inbox?${response.data.conversation._id}`);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error creating conversation");
     }
   };
 
   return (
     <div className="bg-white">
-      {data ? (
-        <div className={`${styles.section} w-[90%] 800px:w-[80%]`}>
-          <div className="w-full py-5">
-            <div className="block w-full 800px:flex">
-              <div className="w-full 800px:w-[50%]">
+      <div className={`${styles.section} w-[90%] 800px:w-[80%]`}>
+        <div className="w-full py-5">
+          <div className="block w-full 800px:flex">
+            <div className="w-full 800px:w-[50%]">
+              {data.images && data.images[select] && (
                 <img
-                  src={`${data && data.images[select]?.url}`}
-                  alt=""
+                  src={data.images[select].url}
+                  alt={data.name}
                   className="w-[80%]"
                 />
-                <div className="w-full flex">
-                  {data &&
-                    data.images.map((i, index) => (
-                      <div
-                        className={`${
-                          select === 0 ? "border" : "null"
-                        } cursor-pointer`}
-                      >
-                        <img
-                          src={`${i?.url}`}
-                          alt=""
-                          className="h-[200px] overflow-hidden mr-3 mt-3"
-                          onClick={() => setSelect(index)}
-                        />
-                      </div>
-                    ))}
+              )}
+              <div className="w-full flex">
+                {data.images?.map((image, index) => (
                   <div
+                    key={index}
                     className={`${
-                      select === 1 ? "border" : "null"
+                      select === index ? "border-2 border-blue-500" : ""
                     } cursor-pointer`}
-                  ></div>
+                    onClick={() => setSelect(index)}
+                  >
+                    <img
+                      src={image.url}
+                      alt={`${data.name}-${index}`}
+                      className="h-[200px] overflow-hidden mr-3 mt-3"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="w-full 800px:w-[50%] pt-5">
+              <h1 className={`${styles.productTitle}`}>{data.name}</h1>
+              <p>{data.description}</p>
+              <div className="flex pt-3">
+                <h4 className={`${styles.productDiscountPrice}`}>
+                  ${data.discountPrice}
+                </h4>
+                {data.originalPrice && (
+                  <h3 className={`${styles.price}`}>
+                    ${data.originalPrice}
+                  </h3>
+                )}
+              </div>
+
+              <div className="flex items-center mt-12 justify-between pr-3">
+                <div>
+                  <button
+                    className="bg-gradient-to-r from-teal-400 to-teal-500 text-white font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out"
+                    onClick={decrementCount}
+                  >
+                    -
+                  </button>
+                  <span className="bg-gray-200 text-gray-800 font-medium px-4 py-[11px]">
+                    {count}
+                  </span>
+                  <button
+                    className="bg-gradient-to-r from-teal-400 to-teal-500 text-white font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out"
+                    onClick={incrementCount}
+                  >
+                    +
+                  </button>
+                </div>
+                <div>
+                  {click ? (
+                    <AiFillHeart
+                      size={30}
+                      className="cursor-pointer"
+                      onClick={() => removeFromWishlistHandler(data)}
+                      color="red"
+                      title="Remove from wishlist"
+                    />
+                  ) : (
+                    <AiOutlineHeart
+                      size={30}
+                      className="cursor-pointer"
+                      onClick={() => addToWishlistHandler(data)}
+                      color="#333"
+                      title="Add to wishlist"
+                    />
+                  )}
                 </div>
               </div>
-              <div className="w-full 800px:w-[50%] pt-5">
-                <h1 className={`${styles.productTitle}`}>{data.name}</h1>
-                <p>{data.description}</p>
-                <div className="flex pt-3">
-                  <h4 className={`${styles.productDiscountPrice}`}>
-                    {data.discountPrice}$
-                  </h4>
-                  <h3 className={`${styles.price}`}>
-                    {data.originalPrice ? data.originalPrice + "$" : null}
-                  </h3>
-                </div>
 
-                <div className="flex items-center mt-12 justify-between pr-3">
-                  <div>
-                    <button
-                      className="bg-gradient-to-r from-teal-400 to-teal-500 text-white font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out"
-                      onClick={decrementCount}
-                    >
-                      -
-                    </button>
-                    <span className="bg-gray-200 text-gray-800 font-medium px-4 py-[11px]">
-                      {count}
-                    </span>
-                    <button
-                      className="bg-gradient-to-r from-teal-400 to-teal-500 text-white font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out"
-                      onClick={incrementCount}
-                    >
-                      +
-                    </button>
-                  </div>
-                  <div>
-                    {click ? (
-                      <AiFillHeart
-                        size={30}
-                        className="cursor-pointer"
-                        onClick={() => removeFromWishlistHandler(data)}
-                        color={click ? "red" : "#333"}
-                        title="Remove from wishlist"
-                      />
-                    ) : (
-                      <AiOutlineHeart
-                        size={30}
-                        className="cursor-pointer"
-                        onClick={() => addToWishlistHandler(data)}
-                        color={click ? "red" : "#333"}
-                        title="Add to wishlist"
+              <div
+                className={`${styles.button} !mt-6 !rounded !h-11 flex items-center`}
+                onClick={() => addToCartHandler(data._id)}
+              >
+                <span className="text-white flex items-center">
+                  Add to cart <AiOutlineShoppingCart className="ml-1" />
+                </span>
+              </div>
+
+              {data.shop && (
+                <div className="flex items-center pt-8">
+                  <Link to={`/shop/preview/${data.shop._id}`}>
+                    {data.shop.avatar?.url && (
+                      <img
+                        src={data.shop.avatar.url}
+                        alt={data.shop.name}
+                        className="w-[50px] h-[50px] rounded-full mr-2"
                       />
                     )}
-                  </div>
-                </div>
-                <div
-                  className={`${styles.button} !mt-6 !rounded !h-11 flex items-center`}
-                  onClick={() => addToCartHandler(data._id)}
-                >
-                  <span className="text-white flex items-center">
-                    Add to cart <AiOutlineShoppingCart className="ml-1" />
-                  </span>
-                </div>
-                <div className="flex items-center pt-8">
-                  <Link to={`/shop/preview/${data?.shop._id}`}>
-                    <img
-                      src={`${data?.shop?.avatar?.url}`}
-                      alt=""
-                      className="w-[50px] h-[50px] rounded-full mr-2"
-                    />
                   </Link>
                   <div className="pr-8">
-                    <Link to={`/shop/preview/${data?.shop._id}`}>
+                    <Link to={`/shop/preview/${data.shop._id}`}>
                       <h3 className={`${styles.shop_name} pb-1 pt-1`}>
                         {data.shop.name}
                       </h3>
@@ -232,19 +249,19 @@ const ProductDetails = ({ data }) => {
                     </span>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
-          <ProductDetailsInfo
-            data={data}
-            products={products}
-            totalReviewsLength={totalReviewsLength}
-            averageRating={averageRating}
-          />
-          <br />
-          <br />
         </div>
-      ) : null}
+        <ProductDetailsInfo
+          data={data}
+          products={products}
+          totalReviewsLength={totalReviewsLength}
+          averageRating={averageRating}
+        />
+        <br />
+        <br />
+      </div>
     </div>
   );
 };
