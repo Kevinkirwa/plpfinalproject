@@ -64,6 +64,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import EmailVerification from './components/Signup/EmailVerification';
 import ShopVerification from './components/Shop/ShopVerification';
 import { initializeSocket, disconnectSocket } from './utils/socket';
+import ChatBot from "./components/Chat/ChatBot";
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -361,6 +362,7 @@ const App = () => {
               draggable
               pauseOnHover
             />
+            <ChatBot />
           </div>
         </div>
       </BrowserRouter>
