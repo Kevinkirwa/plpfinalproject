@@ -89,14 +89,14 @@ const payment = require("./controller/payment");
 const mpesa = require("./controller/mpesa");
 const order = require("./controller/order");
 const conversation = require("./controller/conversation");
-const message = require("./controller/message");
+const messages = require("./controller/message");
 const withdraw = require("./controller/withdraw");
 const contactRoute = require("./routes/contactRoute");
 
 // Mount routes
 app.use("/api/v2/user", user);
 app.use("/api/v2/conversation", conversation);
-app.use("/api/v2/message", message);
+app.use("/api/v2/message", messages);
 app.use("/api/v2/order", order);
 app.use("/api/v2/shop", shop);
 app.use("/api/v2/product", product);

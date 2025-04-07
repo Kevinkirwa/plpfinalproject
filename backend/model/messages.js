@@ -4,12 +4,15 @@ const messagesSchema = new mongoose.Schema(
   {
     conversationId: {
       type: String,
-    },
-    text: {
-      type: String,
+      required: true,
     },
     sender: {
       type: String,
+      required: true,
+    },
+    text: {
+      type: String,
+      required: true,
     },
     images: {
       public_id: {
@@ -18,6 +21,10 @@ const messagesSchema = new mongoose.Schema(
       url: {
         type: String,
       },
+    },
+    seen: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }
