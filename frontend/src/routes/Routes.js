@@ -18,6 +18,7 @@ import TrackOrderPage from "../pages/TrackOrderPage";
 import UserInbox from "../pages/UserInbox.jsx";
 import AboutPage from "../pages/AboutPage";
 import Chat from "../components/Chat/Chat";
+import SellerActivationPage from "../pages/SellerActivationPage";
 
 export { 
     LoginPage,
@@ -39,5 +40,6 @@ export {
     TrackOrderPage,
     UserInbox,
     AboutPage,
-    Chat
+    Chat,
+    SellerActivationPage
 };
