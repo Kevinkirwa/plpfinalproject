@@ -56,6 +56,7 @@ server.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       // Clear token on unauthorized
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
     }
     return Promise.reject(error);
   }

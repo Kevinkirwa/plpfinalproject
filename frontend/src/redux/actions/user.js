@@ -17,7 +17,11 @@ export const loadUser = () => async (dispatch) => {
       return null;
     }
 
-    const { data } = await server.get("/user/getuser");
+    const { data } = await server.get("/user/getuser", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
     
     if (data?.user) {
       dispatch({
@@ -36,6 +40,7 @@ export const loadUser = () => async (dispatch) => {
     // If token is invalid, clear it
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
     }
     
     dispatch({
