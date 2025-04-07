@@ -8,31 +8,40 @@ const router = express.Router();
 // create a new conversation
 router.post(
   "/create-new-conversation",
+  isAuthenticated,
   catchAsyncErrors(async (req, res, next) => {
     try {
       const { groupTitle, userId, sellerId } = req.body;
 
+      if (!userId || !sellerId) {
+        return next(new ErrorHandler("Missing required fields", 400));
+      }
+
+      // Check if conversation exists
       const isConversationExist = await Conversation.findOne({ groupTitle });
 
       if (isConversationExist) {
-        const conversation = isConversationExist;
-        res.status(201).json({
+        return res.status(200).json({
           success: true,
-          conversation,
-        });
-      } else {
-        const conversation = await Conversation.create({
-          members: [userId, sellerId],
-          groupTitle: groupTitle,
-        });
-
-        res.status(201).json({
-          success: true,
-          conversation,
+          conversation: isConversationExist,
         });
       }
+
+      // Create new conversation
+      const conversation = await Conversation.create({
+        members: [userId, sellerId],
+        groupTitle: groupTitle,
+        lastMessage: "",
+        lastMessageId: null
+      });
+
+      res.status(201).json({
+        success: true,
+        conversation,
+      });
     } catch (error) {
-      return next(new ErrorHandler(error.response.message), 500);
+      console.error("Conversation creation error:", error);
+      return next(new ErrorHandler(error.message || "Error creating conversation", 500));
     }
   })
 );

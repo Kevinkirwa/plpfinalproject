@@ -17,6 +17,7 @@ import OrderDetailsPage from "../pages/OrderDetailsPage";
 import TrackOrderPage from "../pages/TrackOrderPage";
 import UserInbox from "../pages/UserInbox.jsx";
 import AboutPage from "../pages/AboutPage";
+import Chat from "../components/Chat/Chat";
 
 export { 
     LoginPage,
@@ -37,5 +38,6 @@ export {
     OrderDetailsPage,
     TrackOrderPage,
     UserInbox,
-    AboutPage
+    AboutPage,
+    Chat
 };
