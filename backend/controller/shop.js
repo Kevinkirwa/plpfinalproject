@@ -15,10 +15,10 @@ const User = require("../model/user");
 router.post("/create-shop", async (req, res, next) => {
   try {
     const { name, email, password, address, phoneNumber, zipCode, avatar } = req.body;
-    const sellerEmail = await User.findOne({ email });
+    const sellerEmail = await Shop.findOne({ email });
 
     if (sellerEmail) {
-      return next(new ErrorHandler("User already exists", 400));
+      return next(new ErrorHandler("Shop already exists with this email", 400));
     }
 
     // Upload avatar to Cloudinary
@@ -39,7 +39,7 @@ router.post("/create-shop", async (req, res, next) => {
       { expiresIn: "1h" }
     );
 
-    const seller = {
+    const shop = {
       name: name,
       email: email,
       password: password,
@@ -55,8 +55,8 @@ router.post("/create-shop", async (req, res, next) => {
       }
     };
 
-    // Save seller with verification token
-    const newSeller = await User.create(seller);
+    // Save shop with verification token
+    const newShop = await Shop.create(shop);
 
     // Get the correct frontend URL with fallbacks
     const frontendUrl = process.env.FRONTEND_URL || 
@@ -75,11 +75,11 @@ router.post("/create-shop", async (req, res, next) => {
     
     try {
       await sendMail({
-        email: seller.email,
+        email: shop.email,
         subject: "Verify your shop account",
         html: `
-          <h2>Welcome to our platform!</h2>
-          <p>Please click the link below to verify your shop account:</p>
+          <h2>Welcome to KartHub!</h2>
+          <p>Thank you for registering your shop with us. Please click the link below to verify your shop account:</p>
           <a href="${verificationLink}" style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Verify Shop</a>
           <p>This link will expire in 1 hour.</p>
           <p>If you did not create a shop account, please ignore this email.</p>
@@ -93,10 +93,10 @@ router.post("/create-shop", async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: "Please check your email to verify your shop account",
-      seller: {
-        name: newSeller.name,
-        email: newSeller.email,
-        isVerified: newSeller.isVerified
+      shop: {
+        name: newShop.name,
+        email: newShop.email,
+        isVerified: newShop.isVerified
       }
     });
   } catch (error) {
@@ -105,44 +105,41 @@ router.post("/create-shop", async (req, res, next) => {
   }
 });
 
-// verify shop via link
-router.get(
-  "/verify-shop",
-  catchAsyncErrors(async (req, res, next) => {
-    try {
-      const { token } = req.query;
+// verify shop
+router.get("/verify-shop", catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { token } = req.query;
 
-      if (!token) {
-        return next(new ErrorHandler("Invalid verification link", 400));
-      }
-
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const seller = await User.findOne({ email: decoded.email });
-
-      if (!seller) {
-        return next(new ErrorHandler("Seller not found", 400));
-      }
-
-      if (seller.isVerified) {
-        return next(new ErrorHandler("Shop already verified", 400));
-      }
-
-      // Update seller verification status
-      seller.isVerified = true;
-      seller.verificationToken = undefined;
-      await seller.save();
-
-      // Redirect to frontend with success message
-      res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
-    } catch (error) {
-      if (error.name === "TokenExpiredError") {
-        return next(new ErrorHandler("Verification link has expired", 400));
-      }
+    if (!token) {
       return next(new ErrorHandler("Invalid verification link", 400));
     }
-  })
-);
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const shop = await Shop.findOne({ email: decoded.email });
+
+    if (!shop) {
+      return next(new ErrorHandler("Shop not found", 400));
+    }
+
+    if (shop.isVerified) {
+      return next(new ErrorHandler("Shop already verified", 400));
+    }
+
+    // Verify shop and remove verification token
+    shop.isVerified = true;
+    shop.verificationToken = undefined;
+    await shop.save();
+
+    // Redirect to frontend with success message
+    res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return next(new ErrorHandler("Verification link has expired", 400));
+    }
+    return next(new ErrorHandler("Invalid verification link", 400));
+  }
+}));
 
 // resend OTP
 router.post(
@@ -194,28 +191,26 @@ router.post(
       const { email, password } = req.body;
 
       if (!email || !password) {
-        return next(new ErrorHandler("Please provide the all fields!", 400));
+        return next(new ErrorHandler("Please provide all fields!", 400));
       }
 
-      const user = await Shop.findOne({ email }).select("+password");
+      const shop = await Shop.findOne({ email }).select("+password");
 
-      if (!user) {
-        return next(new ErrorHandler("User doesn't exists!", 400));
+      if (!shop) {
+        return next(new ErrorHandler("Shop doesn't exist!", 400));
       }
 
-      if (!user.isVerified) {
+      if (!shop.isVerified) {
         return next(new ErrorHandler("Please verify your email first!", 400));
       }
 
-      const isPasswordValid = await user.comparePassword(password);
+      const isPasswordValid = await shop.comparePassword(password);
 
       if (!isPasswordValid) {
-        return next(
-          new ErrorHandler("Please provide the correct information", 400)
-        );
+        return next(new ErrorHandler("Invalid credentials", 400));
       }
 
-      sendShopToken(user, 201, res);
+      sendShopToken(shop, 201, res);
     } catch (error) {
       return next(new ErrorHandler(error.message, 500));
     }
@@ -564,5 +559,69 @@ router.post(
     }
   })
 );
+
+// resend verification email
+router.post("/resend-verification", catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return next(new ErrorHandler("Please provide email address", 400));
+    }
+
+    const shop = await Shop.findOne({ email });
+
+    if (!shop) {
+      return next(new ErrorHandler("Shop not found", 400));
+    }
+
+    if (shop.isVerified) {
+      return next(new ErrorHandler("Shop is already verified", 400));
+    }
+
+    // Generate new verification token
+    const verificationToken = jwt.sign(
+      { email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // Update shop with new verification token
+    shop.verificationToken = verificationToken;
+    await shop.save();
+
+    // Get the correct frontend URL with fallbacks
+    const frontendUrl = process.env.FRONTEND_URL || 
+                       process.env.FRONTEND_PRODUCTION_URL || 
+                       "https://plpfinalproject.vercel.app";
+
+    // Send new verification link via email
+    const verificationLink = `${frontendUrl}/verify-shop?token=${verificationToken}`;
+    
+    try {
+      await sendMail({
+        email: shop.email,
+        subject: "Verify your shop account",
+        html: `
+          <h2>Welcome to KartHub!</h2>
+          <p>Here's your new verification link. Please click below to verify your shop account:</p>
+          <a href="${verificationLink}" style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Verify Shop</a>
+          <p>This link will expire in 1 hour.</p>
+          <p>If you did not request this verification email, please ignore it.</p>
+        `
+      });
+    } catch (error) {
+      console.error("Error sending email:", error);
+      return next(new ErrorHandler("Error sending verification email", 500));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Verification email sent successfully"
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 500));
+  }
+}));
 
 module.exports = router;

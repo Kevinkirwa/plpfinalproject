@@ -61,6 +61,9 @@ const shopSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  verificationToken: {
+    type: String,
+  },
   otp: {
     type: Number,
   },
