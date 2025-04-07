@@ -4,16 +4,23 @@ import Footer from "../components/Layout/Footer";
 import Header from "../components/Layout/Header";
 import ProductDetails from "../components/Products/ProductDetails";
 import SuggestedProduct from "../components/Products/SuggestedProduct";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import Loader from "../components/Layout/Loader";
+import { getAllProducts } from "../redux/actions/product";
 
 const ProductDetailsPage = () => {
+  const dispatch = useDispatch();
   const { allProducts, isLoading } = useSelector((state) => state.products);
   const { allEvents } = useSelector((state) => state.events);
   const { id } = useParams();
   const [data, setData] = useState(null);
   const [searchParams] = useSearchParams();
   const eventData = searchParams.get("isEvent");
+
+  useEffect(() => {
+    // Load all products when component mounts
+    dispatch(getAllProducts());
+  }, [dispatch]);
 
   useEffect(() => {
     if (eventData !== null && allEvents) {
