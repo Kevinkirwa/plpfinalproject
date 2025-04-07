@@ -21,7 +21,7 @@ const EmailVerification = () => {
         }
 
         console.log('Verifying email with token:', token);
-        const response = await server.get(`/verify-email?token=${token}`);
+        const response = await server.get(`/user/verify-email?token=${token}`);
         console.log('Verification response:', response.data);
 
         if (response.data.success) {
