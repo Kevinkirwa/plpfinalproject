@@ -21,22 +21,8 @@ import {
   TrackOrderPage,
   UserInbox,
   AboutPage,
+  SellerActivationPage,
 } from "./routes/Routes.js";
-import {
-  ShopDashboardPage,
-  ShopCreateProduct,
-  ShopAllProducts,
-  ShopCreateEvents,
-  ShopAllEvents,
-  ShopAllCoupouns,
-  ShopPreviewPage,
-  ShopAllOrders,
-  ShopOrderDetails,
-  ShopAllRefunds,
-  ShopSettingsPage,
-  ShopWithDrawMoneyPage,
-  ShopInboxPage,
-} from "./routes/ShopRoutes";
 import {
   AdminDashboardPage,
   AdminDashboardUsers,
@@ -65,6 +51,7 @@ import EmailVerification from './components/Signup/EmailVerification';
 import ShopVerification from './components/Shop/ShopVerification';
 import { initializeSocket, disconnectSocket } from './utils/socket';
 import ChatBot from "./components/Chat/ChatBot";
+import { shopRoutes } from "./routes/ShopRoutes";
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -73,16 +60,12 @@ const App = () => {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        // Initialize socket connection
         initializeSocket();
-
-        // Load products and events first since they don't require auth
         await Promise.all([
           store.dispatch(getAllProducts()),
           store.dispatch(getAllEvents())
         ]);
 
-        // Check if we have a token before trying to load user data
         const token = localStorage.getItem('token');
         if (token) {
           try {
@@ -91,11 +74,9 @@ const App = () => {
               store.dispatch(loadSeller())
             ]);
 
-            // Log the results for debugging
             console.log('User load result:', userResult);
             console.log('Seller load result:', sellerResult);
 
-            // Handle any rejected promises
             if (userResult.status === 'rejected') {
               console.error('Error loading user:', userResult.reason);
               if (userResult.reason.response?.status === 401) {
@@ -122,7 +103,6 @@ const App = () => {
     
     loadInitialData();
 
-    // Cleanup function
     return () => {
       disconnectSocket();
     };
@@ -152,6 +132,7 @@ const App = () => {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/sign-up" element={<SignupPage />} />
               <Route path="/activation/:activation_token" element={<ActivationPage />} />
+              <Route path="/seller/activation/:activation_token" element={<SellerActivationPage />} />
               <Route path="/products" element={<ProductsPage />} />
               <Route path="/product/:id" element={<ProductDetailsPage />} />
               <Route path="/best-selling" element={<BestSellingPage />} />
@@ -188,102 +169,17 @@ const App = () => {
               />
 
               {/* Shop Routes */}
-              <Route
-                path="/dashboard"
-                element={
-                  <SellerProtectedRoute>
-                    <ShopDashboardPage />
-                  </SellerProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard-products"
-                element={
-                  <SellerProtectedRoute>
-                    <ShopAllProducts />
-                  </SellerProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard-create-product"
-                element={
-                  <SellerProtectedRoute>
-                    <ShopCreateProduct />
-                  </SellerProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard-events"
-                element={
-                  <SellerProtectedRoute>
-                    <ShopAllEvents />
-                  </SellerProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard-create-event"
-                element={
-                  <SellerProtectedRoute>
-                    <ShopCreateEvents />
-                  </SellerProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard-coupouns"
-                element={
-                  <SellerProtectedRoute>
-                    <ShopAllCoupouns />
-                  </SellerProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard-orders"
-                element={
-                  <SellerProtectedRoute>
-                    <ShopAllOrders />
-                  </SellerProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard-refunds"
-                element={
-                  <SellerProtectedRoute>
-                    <ShopAllRefunds />
-                  </SellerProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard-settings"
-                element={
-                  <SellerProtectedRoute>
-                    <ShopSettingsPage />
-                  </SellerProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard-withdraw-money"
-                element={
-                  <SellerProtectedRoute>
-                    <ShopWithDrawMoneyPage />
-                  </SellerProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard-messages"
-                element={
-                  <SellerProtectedRoute>
-                    <ShopInboxPage />
-                  </SellerProtectedRoute>
-                }
-              />
-              <Route
-                path="/shop/preview/:id"
-                element={
-                  <SellerProtectedRoute>
-                    <ShopPreviewPage />
-                  </SellerProtectedRoute>
-                }
-              />
+              {shopRoutes.map((route) => (
+                <Route
+                  key={route.path}
+                  path={route.path}
+                  element={
+                    <SellerProtectedRoute>
+                      {route.element}
+                    </SellerProtectedRoute>
+                  }
+                />
+              ))}
 
               {/* Admin Routes */}
               <Route
