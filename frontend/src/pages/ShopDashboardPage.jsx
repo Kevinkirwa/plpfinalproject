@@ -1,14 +1,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { AiOutlineArrowRight } from "react-icons/ai";
 import { BiMoneyWithdraw, BiPackage } from "react-icons/bi";
-import { FiPackage, FiSettings } from "react-icons/fi";
+import { FiPackage } from "react-icons/fi";
 import { MdOutlineLocalOffer } from "react-icons/md";
 import { BsGraphUp } from "react-icons/bs";
-import { TbMessageCircle } from "react-icons/tb";
-import styles from "../styles/styles";
+import ShopSidebar from "../components/Shop/ShopSidebar";
+import { useSelector } from "react-redux";
 
 const ShopDashboardPage = () => {
+  const { seller } = useSelector((state) => state.seller);
+
   const stats = [
     {
       title: "Total Orders",
@@ -40,43 +41,29 @@ const ShopDashboardPage = () => {
     },
   ];
 
-  const quickActions = [
-    {
-      title: "Create Product",
-      icon: <FiPackage size={20} />,
-      link: "/dashboard-create-product",
-    },
-    {
-      title: "Create Event",
-      icon: <MdOutlineLocalOffer size={20} />,
-      link: "/dashboard-create-event",
-    },
-    {
-      title: "Analytics",
-      icon: <BsGraphUp size={20} />,
-      link: "/dashboard",
-    },
-    {
-      title: "Messages",
-      icon: <TbMessageCircle size={20} />,
-      link: "/dashboard-messages",
-    },
-    {
-      title: "Settings",
-      icon: <FiSettings size={20} />,
-      link: "/dashboard-settings",
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
+    <div className="flex h-screen bg-gray-50">
+      <ShopSidebar />
+      
+      <div className="flex-1 ml-64 p-8">
+        {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Welcome to your seller dashboard. Manage your products, orders, and business here.
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Welcome back, {seller?.name || "Seller"}!
+              </h1>
+              <p className="mt-1 text-sm text-gray-500">
+                Here's what's happening with your shop today.
+              </p>
+            </div>
+            <div className="flex space-x-3">
+              <button className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <BsGraphUp className="mr-2" />
+                View Analytics
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Stats Grid */}
@@ -85,7 +72,7 @@ const ShopDashboardPage = () => {
             <Link
               to={stat.link}
               key={index}
-              className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow duration-300"
+              className="bg-white overflow-hidden shadow-sm rounded-lg hover:shadow-md transition-shadow duration-300"
             >
               <div className="p-5">
                 <div className="flex items-center">
@@ -107,76 +94,46 @@ const ShopDashboardPage = () => {
                   </div>
                 </div>
               </div>
-              <div className="bg-gray-50 px-5 py-3">
-                <div className="text-sm">
-                  <span className="text-blue-600 hover:text-blue-500 font-medium">
-                    View details
-                  </span>
-                </div>
-              </div>
             </Link>
           ))}
         </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white shadow rounded-lg mb-8">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-              Quick Actions
-            </h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              {quickActions.map((action, index) => (
+        {/* Recent Orders and Analytics */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Recent Orders */}
+          <div className="bg-white shadow-sm rounded-lg">
+            <div className="px-4 py-5 sm:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Recent Orders</h3>
                 <Link
-                  to={action.link}
-                  key={index}
-                  className="group relative flex items-center space-x-3 rounded-lg border border-gray-200 bg-white px-6 py-5 shadow-sm hover:border-blue-500 hover:ring-1 hover:ring-blue-500 transition-all duration-200"
+                  to="/dashboard-orders"
+                  className="text-sm font-medium text-blue-600 hover:text-blue-500"
                 >
-                  <div className="flex-shrink-0 text-gray-500 group-hover:text-blue-500">
-                    {action.icon}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="absolute inset-0" aria-hidden="true" />
-                    <p className="text-sm font-medium text-gray-900">
-                      {action.title}
-                    </p>
-                  </div>
+                  View all
                 </Link>
-              ))}
+              </div>
+              <div className="flow-root">
+                <div className="flex items-center justify-center h-32 text-gray-500">
+                  No recent orders
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Recent Activity */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-              Recent Activity
-            </h3>
-            <div className="flow-root">
-              <ul className="-mb-8">
-                <li>
-                  <div className="relative pb-8">
-                    <span
-                      className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
-                      aria-hidden="true"
-                    />
-                    <div className="relative flex space-x-3">
-                      <div>
-                        <span className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
-                          <FiPackage className="h-5 w-5 text-white" />
-                        </span>
-                      </div>
-                      <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                        <div>
-                          <p className="text-sm text-gray-500">
-                            No recent activity
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-              </ul>
+          {/* Sales Analytics */}
+          <div className="bg-white shadow-sm rounded-lg">
+            <div className="px-4 py-5 sm:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Sales Analytics</h3>
+                <select className="text-sm border-gray-300 rounded-md">
+                  <option>Last 7 days</option>
+                  <option>Last 30 days</option>
+                  <option>Last 90 days</option>
+                </select>
+              </div>
+              <div className="flex items-center justify-center h-32 text-gray-500">
+                No sales data available
+              </div>
             </div>
           </div>
         </div>

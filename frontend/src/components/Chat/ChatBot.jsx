@@ -1,21 +1,76 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { AiOutlineMessage, AiOutlineClose, AiOutlineSend } from 'react-icons/ai';
+import { FiMessageSquare, FiX } from 'react-icons/fi';
+import { IoMdSend } from 'react-icons/io';
 import styles from '../../styles/styles';
 import { Link } from 'react-router-dom';
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [chatHistory, setChatHistory] = useState([]);
+  const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
-  const chatEndRef = useRef(null);
+  const messagesEndRef = useRef(null);
   const { user, isAuthenticated } = useSelector((state) => state.user);
   const { seller } = useSelector((state) => state.seller);
 
-  // Auto-scroll to bottom of chat
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatHistory]);
+    scrollToBottom();
+  }, [messages]);
+
+  // Initial greeting based on user type
+  useEffect(() => {
+    if (isOpen && messages.length === 0) {
+      const initialMessage = getInitialMessage();
+      setMessages([
+        {
+          type: 'bot',
+          content: initialMessage.greeting,
+          options: initialMessage.options,
+        },
+      ]);
+    }
+  }, [isOpen, isAuthenticated, seller]);
+
+  const getInitialMessage = () => {
+    if (seller) {
+      return {
+        greeting: 'Welcome back to your seller dashboard! How can I assist you today?',
+        options: [
+          'How do I create a new product listing?',
+          'How can I process orders?',
+          'How do I set up shipping options?',
+          'How can I view my sales analytics?',
+          'How do I handle customer refunds?',
+        ],
+      };
+    } else if (isAuthenticated) {
+      return {
+        greeting: 'Welcome back! How can I help you with your shopping today?',
+        options: [
+          'Track my order',
+          'View my purchase history',
+          'Contact a seller',
+          'Return an item',
+          'Check available discounts',
+        ],
+      };
+    } else {
+      return {
+        greeting: 'Welcome to our marketplace! How can I help you today?',
+        options: [
+          'How do I create an account?',
+          'Browse products',
+          'View shipping information',
+          'Contact support',
+          'Become a seller',
+        ],
+      };
+    }
+  };
 
   const getBotResponse = (message) => {
     const lowerMsg = message.toLowerCase();
@@ -35,80 +90,96 @@ const ChatBot = () => {
     }
 
     // Seller-specific responses
-    if (seller) {
-      if (lowerMsg.includes('sales')) {
-        return "You can view your sales performance in Dashboard > Analytics. Would you like me to explain the metrics?";
-      }
-      if (lowerMsg.includes('product') && lowerMsg.includes('add')) {
-        return "To add a new product, go to Dashboard > Products > Add New. Make sure to include high-quality images and detailed descriptions.";
-      }
-      if (lowerMsg.includes('order') && lowerMsg.includes('process')) {
-        return "To process orders: 1. Go to Dashboard > Orders 2. Click on pending orders 3. Update order status as you process them. Need more details?";
-      }
-      if (lowerMsg.includes('shipping')) {
-        return "You can manage shipping settings in Dashboard > Settings > Shipping. Would you like to know how to set up shipping zones?";
-      }
-      if (lowerMsg.includes('return') || lowerMsg.includes('refund')) {
-        return "For returns and refunds, check Dashboard > Returns. Each return request needs to be processed within 48 hours. Need help with the process?";
-      }
-    }
-    
-    // Logged-in user responses
-    else if (isAuthenticated) {
-      if (lowerMsg.includes('order') && lowerMsg.includes('track')) {
-        return "You can track your order in Profile > My Orders. Click on any order to see its current status and tracking information.";
-      }
-      if (lowerMsg.includes('return')) {
-        return "To return an item: 1. Go to My Orders 2. Find the order 3. Click 'Request Return' 4. Follow the return instructions. Need more help?";
-      }
-      if (lowerMsg.includes('address') || lowerMsg.includes('delivery')) {
-        return "Manage your delivery addresses in Profile > Settings > Addresses. You can add multiple addresses and set a default one.";
-      }
-      if (lowerMsg.includes('payment')) {
-        return "We accept M-Pesa, credit/debit cards, and bank transfers. All payments are processed securely. Which payment method would you like to know more about?";
-      }
-      if (lowerMsg.includes('contact') && lowerMsg.includes('seller')) {
-        return "You can contact a seller by visiting their shop page or product page and clicking the 'Contact Seller' button.";
-      }
-    }
-    
-    // Non-logged in user responses
-    else {
-      if (lowerMsg.includes('account') || lowerMsg.includes('sign up') || lowerMsg.includes('register')) {
-        return "To create an account, click 'Sign Up' at the top of the page. You'll need to provide your email and create a password. Would you like me to guide you through the process?";
-      }
-      if (lowerMsg.includes('login')) {
-        return "Click the 'Login' button at the top right of the page. Enter your email and password to access your account.";
-      }
-      if (lowerMsg.includes('price')) {
-        return "All prices are shown in KES and include VAT. Shipping costs are calculated at checkout based on your location.";
-      }
-      if (lowerMsg.includes('payment')) {
-        return "We accept various payment methods including M-Pesa, credit/debit cards, and bank transfers. Create an account to see all available payment options.";
-      }
-    }
+    const sellerResponses = {
+      "How do I create a new product listing?":
+        "To create a new product listing:\n1. Go to 'Create Product' in your dashboard\n2. Fill in product details (name, description, price)\n3. Upload high-quality images\n4. Set inventory and shipping options\n5. Click 'Publish'",
+      "How can I process orders?":
+        "To process orders:\n1. Go to 'All Orders' in your dashboard\n2. View new orders in the 'Pending' tab\n3. Review order details\n4. Update order status\n5. Arrange shipping",
+      "How do I set up shipping options?":
+        "To set up shipping:\n1. Go to 'Settings'\n2. Select 'Shipping Options'\n3. Add shipping zones\n4. Set rates and delivery times\n5. Save your changes",
+      "How can I view my sales analytics?":
+        "To view analytics:\n1. Click 'Analytics' in your dashboard\n2. View sales trends, popular products\n3. Export reports as needed",
+      "How do I handle customer refunds?":
+        "For refunds:\n1. Go to 'Refunds' section\n2. Review refund request\n3. Approve or decline with reason\n4. Process payment refund if approved",
+    };
 
-    // Default response if no specific match is found
-    return "I'm not sure about that. Could you please rephrase your question? Or you can contact our support team for more detailed assistance.";
+    // Authenticated user responses
+    const userResponses = {
+      "Track my order":
+        "You can track your order by:\n1. Going to 'My Orders'\n2. Finding your order\n3. Clicking 'Track Order'\n4. Viewing real-time updates",
+      "View my purchase history":
+        "To view your purchase history:\n1. Go to your account\n2. Click 'Order History'\n3. View all past purchases",
+      "Contact a seller":
+        "To contact a seller:\n1. Go to the product page\n2. Click 'Contact Seller'\n3. Write your message\n4. Wait for response",
+      "Return an item":
+        "To return an item:\n1. Go to 'My Orders'\n2. Select the item\n3. Click 'Return Item'\n4. Follow return instructions",
+      "Check available discounts":
+        "To check discounts:\n1. Visit the 'Deals' section\n2. View active promotions\n3. Copy discount codes",
+    };
+
+    // Guest user responses
+    const guestResponses = {
+      "How do I create an account?":
+        "To create an account:\n1. Click 'Sign Up'\n2. Enter your details\n3. Verify your email\n4. Start shopping!",
+      "Browse products":
+        "You can browse products by:\n1. Using the search bar\n2. Exploring categories\n3. Checking featured items",
+      "View shipping information":
+        "Shipping information:\n1. Standard delivery: 3-5 days\n2. Express delivery: 1-2 days\n3. International: 7-14 days",
+      "Contact support":
+        "To contact support:\n1. Click 'Help' at the bottom\n2. Select your issue\n3. Fill out the form",
+      "Become a seller":
+        "To become a seller:\n1. Click 'Sell on Our Platform'\n2. Complete verification\n3. Set up your shop",
+    };
+
+    if (seller) {
+      return sellerResponses[message] || "I'll help you find the information you need about selling on our platform.";
+    } else if (isAuthenticated) {
+      return userResponses[message] || "I'll help you find what you're looking for.";
+    } else {
+      return guestResponses[message] || "I'll help you explore our marketplace.";
+    }
   };
 
-  const handleSendMessage = (e) => {
-    e.preventDefault();
+  const handleSendMessage = () => {
     if (!inputMessage.trim()) return;
 
-    // Add user message to chat
-    const userMessage = { type: 'user', text: inputMessage };
-    
-    // Get bot response
-    const botResponse = { type: 'bot', text: getBotResponse(inputMessage) };
-    
-    // Update chat history
-    setChatHistory([...chatHistory, userMessage, botResponse]);
+    // Add user message
+    setMessages((prev) => [
+      ...prev,
+      { type: 'user', content: inputMessage },
+    ]);
+
+    // Get and add bot response
+    const botResponse = getBotResponse(inputMessage);
+    setTimeout(() => {
+      setMessages((prev) => [
+        ...prev,
+        { type: 'bot', content: botResponse },
+      ]);
+    }, 500);
+
     setInputMessage('');
   };
 
+  const handleOptionClick = (option) => {
+    // Add user message
+    setMessages((prev) => [
+      ...prev,
+      { type: 'user', content: option },
+    ]);
+
+    // Get and add bot response
+    const botResponse = getBotResponse(option);
+    setTimeout(() => {
+      setMessages((prev) => [
+        ...prev,
+        { type: 'bot', content: botResponse },
+      ]);
+    }, 500);
+  };
+
   const clearChat = () => {
-    setChatHistory([]);
+    setMessages([]);
   };
 
   return (
@@ -119,9 +190,9 @@ const ChatBot = () => {
         className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 shadow-lg transition-all duration-200"
       >
         {isOpen ? (
-          <AiOutlineClose size={24} />
+          <FiX size={24} />
         ) : (
-          <AiOutlineMessage size={24} />
+          <FiMessageSquare size={24} />
         )}
       </button>
 
@@ -137,7 +208,7 @@ const ChatBot = () => {
                   <p className="text-sm">Welcome, {user?.name || 'User'}!</p>
                 )}
               </div>
-              {chatHistory.length > 0 && (
+              {messages.length > 0 && (
                 <button 
                   onClick={clearChat}
                   className="text-white text-sm hover:text-gray-200"
@@ -150,7 +221,7 @@ const ChatBot = () => {
 
           {/* Chat History */}
           <div className="h-[300px] overflow-y-auto p-4 space-y-4">
-            {chatHistory.length === 0 ? (
+            {messages.length === 0 ? (
               <div className="text-gray-600">
                 <p className="mb-4">Hello! How can I assist you today?</p>
                 <p className="text-sm text-gray-500">Try asking me about:</p>
@@ -180,34 +251,48 @@ const ChatBot = () => {
               </div>
             ) : (
               <>
-                {chatHistory.map((msg, index) => (
+                {messages.map((message, index) => (
                   <div
                     key={index}
-                    className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
                       className={`max-w-[80%] p-3 rounded-lg ${
-                        msg.type === 'user'
+                        message.type === 'user'
                           ? 'bg-blue-500 text-white'
                           : 'bg-gray-100 text-gray-800'
                       }`}
                     >
-                      {msg.text}
+                      <p className="whitespace-pre-line">{message.content}</p>
+                      {message.options && (
+                        <div className="mt-3 space-y-2">
+                          {message.options.map((option, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => handleOptionClick(option)}
+                              className="block w-full text-left px-3 py-2 text-sm bg-white rounded hover:bg-gray-50 transition-colors"
+                            >
+                              {option}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
-                <div ref={chatEndRef} />
+                <div ref={messagesEndRef} />
               </>
             )}
           </div>
 
           {/* Message Input */}
-          <form onSubmit={handleSendMessage} className="border-t p-4">
+          <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="border-t p-4">
             <div className="flex space-x-2">
               <input
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                 placeholder="Type your message..."
                 className="flex-1 p-2 border rounded-lg focus:outline-none focus:border-blue-500"
               />
@@ -215,7 +300,7 @@ const ChatBot = () => {
                 type="submit"
                 className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-colors"
               >
-                <AiOutlineSend size={20} />
+                <IoMdSend size={20} />
               </button>
             </div>
           </form>
