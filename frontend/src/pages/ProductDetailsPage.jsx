@@ -16,12 +16,21 @@ const ProductDetailsPage = () => {
   const [data, setData] = useState(null);
   const [searchParams] = useSearchParams();
   const eventData = searchParams.get("isEvent");
+  const [pageLoading, setPageLoading] = useState(true);
 
+  // Load all products when component mounts
   useEffect(() => {
-    // Load all products when component mounts
-    dispatch(getAllProducts());
+    const loadProducts = async () => {
+      try {
+        await dispatch(getAllProducts());
+      } catch (error) {
+        console.error('Error loading products:', error);
+      }
+    };
+    loadProducts();
   }, [dispatch]);
 
+  // Set product data when products are loaded
   useEffect(() => {
     if (eventData !== null && allEvents) {
       const eventItem = allEvents.find((i) => i._id === id);
@@ -30,25 +39,36 @@ const ProductDetailsPage = () => {
       const productItem = allProducts.find((i) => i._id === id);
       setData(productItem || null);
     }
+    setPageLoading(false);
   }, [allProducts, allEvents, id, eventData]);
 
-  if (isLoading) {
-    return <Loader />;
+  // Show loading spinner while initial data is being fetched
+  if (isLoading || pageLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  // Show not found message if no product is found
+  if (!data) {
+    return (
+      <div>
+        <Header />
+        <div className="w-full h-[70vh] flex items-center justify-center">
+          <p className="text-lg font-medium">Product not found!</p>
+        </div>
+        <Footer />
+      </div>
+    );
   }
 
   return (
     <div>
       <Header />
-      {data ? (
-        <>
-          <ProductDetails data={data} />
-          {!eventData && <SuggestedProduct data={data} />}
-        </>
-      ) : (
-        <div className="w-full h-screen flex items-center justify-center">
-          <p className="text-lg font-medium">No product found!</p>
-        </div>
-      )}
+      <ProductDetails data={data} />
+      {!eventData && <SuggestedProduct data={data} />}
       <Footer />
     </div>
   );

@@ -29,35 +29,23 @@ const ProductDetails = ({ data }) => {
   const [select, setSelect] = useState(0);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [isLoading, setIsLoading] = useState(true);
+
+  // Validate data before rendering
+  if (!data || !data.images || !data.shop) {
+    return null;
+  }
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-        if (data?.shop?._id) {
-          await dispatch(getAllProductsShop(data.shop._id));
-        }
-        if (wishlist) {
-          setClick(wishlist.some((i) => i._id === data?._id));
-        }
-      } catch (error) {
-        console.error('Error loading product data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    // Load shop products
+    if (data.shop._id) {
+      dispatch(getAllProductsShop(data.shop._id));
+    }
 
-    loadData();
-  }, [data, wishlist, dispatch]);
-
-  if (!data || isLoading) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
+    // Update wishlist status
+    if (wishlist) {
+      setClick(wishlist.some((i) => i._id === data._id));
+    }
+  }, [data.shop._id, wishlist, data._id, dispatch]);
 
   const incrementCount = () => {
     setCount(count + 1);
@@ -131,26 +119,28 @@ const ProductDetails = ({ data }) => {
         <div className="w-full py-5">
           <div className="block w-full 800px:flex">
             <div className="w-full 800px:w-[50%]">
-              {data.images && data.images[select] && (
+              {data.images[select] && (
                 <img
                   src={data.images[select].url}
                   alt={data.name}
-                  className="w-[80%]"
+                  className="w-[80%] object-contain"
+                  loading="eager"
                 />
               )}
-              <div className="w-full flex">
-                {data.images?.map((image, index) => (
+              <div className="w-full flex flex-wrap gap-2 mt-3">
+                {data.images.map((image, index) => (
                   <div
                     key={index}
-                    className={`${
-                      select === index ? "border-2 border-blue-500" : ""
-                    } cursor-pointer`}
+                    className={`cursor-pointer border-2 ${
+                      select === index ? "border-blue-500" : "border-transparent"
+                    }`}
                     onClick={() => setSelect(index)}
                   >
                     <img
                       src={image.url}
                       alt={`${data.name}-${index}`}
-                      className="h-[200px] overflow-hidden mr-3 mt-3"
+                      className="h-[100px] w-[100px] object-contain"
+                      loading="lazy"
                     />
                   </div>
                 ))}
@@ -159,20 +149,20 @@ const ProductDetails = ({ data }) => {
             
             <div className="w-full 800px:w-[50%] pt-5">
               <h1 className={`${styles.productTitle}`}>{data.name}</h1>
-              <p>{data.description}</p>
-              <div className="flex pt-3">
+              <p className="mt-2">{data.description}</p>
+              <div className="flex items-center mt-6">
                 <h4 className={`${styles.productDiscountPrice}`}>
                   ${data.discountPrice}
                 </h4>
                 {data.originalPrice && (
-                  <h3 className={`${styles.price}`}>
+                  <h3 className={`${styles.price} ml-3`}>
                     ${data.originalPrice}
                   </h3>
                 )}
               </div>
 
               <div className="flex items-center mt-12 justify-between pr-3">
-                <div>
+                <div className="flex items-center">
                   <button
                     className="bg-gradient-to-r from-teal-400 to-teal-500 text-white font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out"
                     onClick={decrementCount}
@@ -183,7 +173,7 @@ const ProductDetails = ({ data }) => {
                     {count}
                   </span>
                   <button
-                    className="bg-gradient-to-r from-teal-400 to-teal-500 text-white font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out"
+                    className="bg-gradient-to-r from-teal-400 to-teal-500 text-white font-bold rounded-r px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out"
                     onClick={incrementCount}
                   >
                     +
@@ -211,7 +201,7 @@ const ProductDetails = ({ data }) => {
               </div>
 
               <div
-                className={`${styles.button} !mt-6 !rounded !h-11 flex items-center`}
+                className={`${styles.button} !mt-6 !rounded !h-11 flex items-center justify-center`}
                 onClick={() => addToCartHandler(data._id)}
               >
                 <span className="text-white flex items-center">
@@ -219,37 +209,36 @@ const ProductDetails = ({ data }) => {
                 </span>
               </div>
 
-              {data.shop && (
-                <div className="flex items-center pt-8">
+              <div className="flex items-center pt-8">
+                <Link to={`/shop/preview/${data.shop._id}`}>
+                  {data.shop.avatar?.url && (
+                    <img
+                      src={data.shop.avatar.url}
+                      alt={data.shop.name}
+                      className="w-[50px] h-[50px] rounded-full mr-2"
+                      loading="lazy"
+                    />
+                  )}
+                </Link>
+                <div className="pr-8">
                   <Link to={`/shop/preview/${data.shop._id}`}>
-                    {data.shop.avatar?.url && (
-                      <img
-                        src={data.shop.avatar.url}
-                        alt={data.shop.name}
-                        className="w-[50px] h-[50px] rounded-full mr-2"
-                      />
-                    )}
+                    <h3 className={`${styles.shop_name} pb-1 pt-1`}>
+                      {data.shop.name}
+                    </h3>
                   </Link>
-                  <div className="pr-8">
-                    <Link to={`/shop/preview/${data.shop._id}`}>
-                      <h3 className={`${styles.shop_name} pb-1 pt-1`}>
-                        {data.shop.name}
-                      </h3>
-                    </Link>
-                    <h5 className="pb-3 text-[15px]">
-                      ({averageRating}/5) Ratings
-                    </h5>
-                  </div>
-                  <div
-                    className={`${styles.button} bg-[#6443d1] mt-4 !rounded !h-11`}
-                    onClick={handleMessageSubmit}
-                  >
-                    <span className="text-white flex items-center">
-                      Send Message <AiOutlineMessage className="ml-1" />
-                    </span>
-                  </div>
+                  <h5 className="pb-3 text-[15px]">
+                    ({averageRating}/5) Ratings
+                  </h5>
                 </div>
-              )}
+                <div
+                  className={`${styles.button} bg-[#6443d1] mt-4 !rounded !h-11`}
+                  onClick={handleMessageSubmit}
+                >
+                  <span className="text-white flex items-center">
+                    Send Message <AiOutlineMessage className="ml-1" />
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -259,8 +248,6 @@ const ProductDetails = ({ data }) => {
           totalReviewsLength={totalReviewsLength}
           averageRating={averageRating}
         />
-        <br />
-        <br />
       </div>
     </div>
   );
