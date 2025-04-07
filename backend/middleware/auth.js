@@ -40,7 +40,16 @@ exports.isAuthenticated = catchAsyncErrors(async(req, res, next) => {
 
 exports.isSeller = catchAsyncErrors(async(req, res, next) => {
     try {
-        const { seller_token } = req.cookies;
+        // Try to get token from Authorization header first
+        const authHeader = req.headers.authorization;
+        let seller_token;
+        
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            seller_token = authHeader.split(' ')[1];
+        } else {
+            // Fall back to cookie if no Authorization header
+            seller_token = req.cookies.seller_token;
+        }
         
         if (!seller_token) {
             return next(new ErrorHandler("Please login to continue", 401));

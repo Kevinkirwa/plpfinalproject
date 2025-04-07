@@ -213,11 +213,23 @@ router.post(
       // Generate token
       const token = shop.getJwtToken();
 
-      res.status(200).json({
-        success: true,
-        token,
-        shop
-      });
+      // Set cookie options
+      const cookieOptions = {
+        expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
+        httpOnly: true,
+        sameSite: "none",
+        secure: true
+      };
+
+      // Send response with both cookie and token in body
+      res
+        .status(200)
+        .cookie("seller_token", token, cookieOptions)
+        .json({
+          success: true,
+          token,
+          shop
+        });
     } catch (error) {
       return next(new ErrorHandler(error.message, 500));
     }
