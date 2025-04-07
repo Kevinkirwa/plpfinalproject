@@ -44,12 +44,18 @@ server.interceptors.request.use(
 
 // Add a response interceptor to handle errors
 server.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // If this is a login response, store the token
+    if (response.config.url === '/user/login-user' && response.data.token) {
+      localStorage.setItem('token', response.data.token);
+    }
+    return response;
+  },
   (error) => {
     console.error('Response error:', error.response?.data || error.message);
     if (error.response && error.response.status === 401) {
+      // Clear token on unauthorized
       localStorage.removeItem('token');
-      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

@@ -2,7 +2,11 @@ const getCookieOptions = () => {
   const isProduction = process.env.NODE_ENV === "production";
   
   // Log the cookie domain for debugging
-  console.log("Cookie domain:", process.env.COOKIE_DOMAIN);
+  console.log("Cookie configuration:", {
+    isProduction,
+    domain: process.env.COOKIE_DOMAIN,
+    frontendUrl: process.env.FRONTEND_URL
+  });
   
   return {
     expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
