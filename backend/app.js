@@ -24,7 +24,7 @@ app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 
-// CORS configuration - MOVED TO TOP
+// CORS configuration
 const isProduction = process.env.NODE_ENV === 'production';
 console.log('CORS Configuration:', {
   NODE_ENV: process.env.NODE_ENV,
@@ -46,11 +46,17 @@ app.use((req, res, next) => {
     const allowedOrigins = [
       'https://plpfinalproject.vercel.app',
       'https://plpfinalproject-git-main-kirwas-projects.vercel.app',
-      'http://localhost:3000'  // Add localhost for development
+      'http://localhost:3000'
     ];
     
     if (allowedOrigins.includes(origin)) {
       res.header('Access-Control-Allow-Origin', origin);
+    } else {
+      console.log('Blocked origin:', origin);
+      return res.status(403).json({
+        success: false,
+        message: 'Not allowed by CORS'
+      });
     }
   } else {
     // In development, allow any origin

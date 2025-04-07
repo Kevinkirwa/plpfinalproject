@@ -49,7 +49,11 @@ router.post("/create-user", async (req, res, next) => {
     const newUser = await User.create(user);
 
     // Send verification link via email
-    const verificationLink = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+    const frontendUrl = process.env.NODE_ENV === 'production' 
+      ? process.env.FRONTEND_URL 
+      : process.env.FRONTEND_DEV_URL;
+    
+    const verificationLink = `${frontendUrl}/verify-email?token=${verificationToken}`;
     try {
       await sendMail({
         email: user.email,
