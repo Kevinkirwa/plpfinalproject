@@ -51,11 +51,14 @@ import EmailVerification from './components/Signup/EmailVerification';
 import ShopVerification from './components/Shop/ShopVerification';
 import { initializeSocket, disconnectSocket } from './utils/socket';
 import ChatBot from "./components/Chat/ChatBot";
-import { shopRoutes } from "./routes/ShopRoutes";
+import ShopRoutes from "./routes/ShopRoutes";
+import { useSelector } from "react-redux";
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const { isAuthenticated } = useSelector((state) => state.user);
+  const { isSeller } = useSelector((state) => state.seller);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -169,17 +172,9 @@ const App = () => {
               />
 
               {/* Shop Routes */}
-              {shopRoutes.map((route) => (
-                <Route
-                  key={route.path}
-                  path={route.path}
-                  element={
-                    <SellerProtectedRoute>
-                      {route.element}
-                    </SellerProtectedRoute>
-                  }
-                />
-              ))}
+              {isSeller ? (
+                <Route path="/shop/*" element={<ShopRoutes />} />
+              ) : null}
 
               {/* Admin Routes */}
               <Route
