@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { FiDollarSign, FiCreditCard, FiHistory } from "react-icons/fi";
+import { FiDollarSign, FiCreditCard, FiClock } from "react-icons/fi";
 import ShopLayout from "../../components/Shop/ShopLayout";
 
 const ShopWithdrawMoney = () => {
@@ -171,7 +171,7 @@ const ShopWithdrawMoney = () => {
             </h2>
             {withdrawals.length === 0 ? (
               <div className="text-center py-8">
-                <FiHistory className="mx-auto h-12 w-12 text-gray-400" />
+                <FiClock className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-sm font-medium text-gray-900">
                   No withdrawals yet
                 </h3>
