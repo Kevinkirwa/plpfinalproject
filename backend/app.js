@@ -46,7 +46,11 @@ app.use((req, res, next) => {
     const allowedOrigins = [
       'https://plpfinalproject.vercel.app',
       'https://plpfinalproject-git-main-kirwas-projects.vercel.app',
-      'http://localhost:3000'
+      'http://localhost:3000',
+      process.env.FRONTEND_URL,
+      process.env.FRONTEND_PRODUCTION_URL,
+      'https://checkout.safaricom.co.ke',  // Allow M-Pesa callbacks
+      'https://sandbox.safaricom.co.ke'    // Allow M-Pesa sandbox callbacks
     ];
     
     if (allowedOrigins.includes(origin)) {

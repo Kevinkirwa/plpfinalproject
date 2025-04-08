@@ -139,13 +139,6 @@ A full-stack e-commerce platform built with the MERN stack (MongoDB, Express.js,
 ### Admin Panel
 ![Admin Panel](frontend/src/assets/screenshots/admin.png)
 
-> **Note:** To add screenshots to the project:
-> 1. Take screenshots of your application's key features
-> 2. Save them in the `frontend/src/assets/screenshots/` directory
-> 3. Use descriptive filenames (e.g., homepage.png, products.png)
-> 4. Ensure screenshots are clear and showcase the feature well
-> 5. Recommended size: 1200x800 pixels or similar aspect ratio
-
 ## Tech Stack
 
 ### Frontend

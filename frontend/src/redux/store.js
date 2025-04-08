@@ -8,11 +8,13 @@ import { wishlistReducer } from "./reducers/wishlist";
 import { orderReducer } from "./reducers/order";
 import notificationReducer from './reducers/notificationSlice';
 import { shopReducer } from "./reducers/shop";
+import { sellersReducer } from "./reducers/sellers";
 
 export const store = configureStore({
   reducer: {
     user: userReducer,
     seller: sellerReducer,
+    sellers: sellersReducer,
     products: productReducer,
     events: eventReducer,
     cart: cartReducer,

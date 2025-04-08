@@ -86,19 +86,28 @@ export const deleteProduct = (id) => async (dispatch) => {
 // get all products
 export const getAllProducts = () => async (dispatch) => {
   try {
+    console.log('Starting to fetch all products...');
     dispatch({
       type: "getAllProductsRequest",
     });
 
     const { data } = await server.get("/product/get-all-products");
+    console.log('Products fetched successfully:', data);
+    
     dispatch({
       type: "getAllProductsSuccess",
       payload: data.products,
     });
   } catch (error) {
+    console.error('Error fetching products:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+    
     dispatch({
       type: "getAllProductsFailed",
-      payload: error.response.data.message,
+      payload: error.response?.data?.message || 'Failed to fetch products',
     });
   }
 };

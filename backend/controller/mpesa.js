@@ -164,27 +164,14 @@ router.post(
 
       const { ResultCode, MerchantRequestID, CheckoutRequestID, ResultDesc } = callbackData;
       
-      console.log("Extracted fields:", {
+      console.log("Processing payment:", {
         ResultCode,
         MerchantRequestID,
         CheckoutRequestID,
         ResultDesc
       });
-      
-      if (!MerchantRequestID) {
-        console.error("No MerchantRequestID in callback data");
-        return res.status(400).json({
-          success: false,
-          message: "Missing MerchantRequestID in callback data",
-        });
-      }
 
-      console.log("Searching for order with transaction IDs:", {
-        merchantRequestId: MerchantRequestID,
-        checkoutRequestId: CheckoutRequestID
-      });
-      
-      // Find the order first
+      // Find the order
       const order = await Order.findOne({
         $or: [
           { "paymentInfo.transactionId": CheckoutRequestID },
@@ -198,23 +185,12 @@ router.post(
           merchantRequestId: MerchantRequestID,
           checkoutRequestId: CheckoutRequestID
         });
-        console.error("Search criteria:", {
-          transactionId: CheckoutRequestID,
-          checkoutRequestId: CheckoutRequestID,
-          merchantRequestId: MerchantRequestID
-        });
-        return res.status(404).json({
+        // Still return 200 to M-Pesa but log the error
+        return res.status(200).json({
           success: false,
-          message: "Order not found",
+          message: "Order not found, but callback processed",
         });
       }
-
-      console.log("Found order:", {
-        orderId: order._id,
-        currentStatus: order.paymentInfo.status,
-        paymentInfo: order.paymentInfo,
-        resultCode: ResultCode
-      });
 
       // Update order based on result code
       let updateData = {};
@@ -227,19 +203,19 @@ router.post(
         };
         console.log("Payment successful, updating order status to Succeeded");
       } else if (ResultCode === 1032) {
-        // Payment cancelled
+        // Payment cancelled by user
         updateData = {
           "paymentInfo.status": "Cancelled",
           status: "Cancelled"
         };
-        console.log("Payment cancelled, updating order status to Cancelled");
+        console.log("Payment cancelled by user");
       } else {
         // Payment failed
         updateData = {
           "paymentInfo.status": "Failed",
           status: "Payment Failed"
         };
-        console.log("Payment failed, updating order status to Failed");
+        console.log("Payment failed with ResultCode:", ResultCode);
       }
 
       // Update the order
@@ -249,31 +225,27 @@ router.post(
         { new: true }
       );
 
-      console.log("Order updated successfully:", {
+      console.log("Order updated:", {
         orderId: updatedOrder._id,
         newStatus: updatedOrder.paymentInfo.status,
-        orderStatus: updatedOrder.status,
-        resultCode: ResultCode,
-        resultDesc: ResultDesc
+        orderStatus: updatedOrder.status
       });
 
+      // Always return 200 to M-Pesa
       res.status(200).json({
         success: true,
-        message: ResultCode === 0 ? "Payment successful" : 
-                ResultCode === 1032 ? "Payment cancelled" : 
-                "Payment failed",
+        message: "Callback processed successfully",
         resultCode: ResultCode,
-        resultDesc: ResultDesc,
-        orderStatus: updatedOrder.paymentInfo.status
+        resultDesc: ResultDesc
       });
     } catch (error) {
       console.error("=== M-Pesa Callback Error ===");
       console.error("Error details:", error);
       console.error("Stack trace:", error.stack);
-      res.status(500).json({
+      // Still return 200 to M-Pesa even on error
+      res.status(200).json({
         success: false,
-        message: "Error processing callback",
-        error: error.message
+        message: "Error processing callback, but received",
       });
     }
   })

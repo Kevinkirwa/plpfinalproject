@@ -5,30 +5,34 @@ import server from "../../server";
 export const loadSeller = () => async (dispatch) => {
   try {
     dispatch({ type: "LoadSellerRequest" });
-    const { data } = await axios.get(`${server}/shop/getSeller`, {
-      withCredentials: true,
-    });
+    const { data } = await server.get(`/shop/getSeller`);
+    
     dispatch({ type: "LoadSellerSuccess", payload: data.seller });
+    return { success: true, seller: data.seller };
   } catch (error) {
+    const errorMessage = error.response?.data?.message || "Failed to load seller";
     dispatch({
       type: "LoadSellerFail",
-      payload: error.response.data.message,
+      payload: errorMessage,
     });
+    return { success: false, error: errorMessage };
   }
 };
 
-// get all sellers
+// get all sellers -- admin only
 export const getAllSellers = () => async (dispatch) => {
   try {
     dispatch({ type: "getAllSellersRequest" });
-    const { data } = await axios.get(`${server}/shop/admin-all-sellers`, {
-      withCredentials: true,
-    });
+    const { data } = await server.get(`/shop/admin-all-sellers`);
+    
     dispatch({ type: "getAllSellersSuccess", payload: data.sellers });
+    return { success: true, sellers: data.sellers };
   } catch (error) {
+    const errorMessage = error.response?.data?.message || "Failed to fetch sellers";
     dispatch({
       type: "getAllSellerFailed",
-      payload: error.response.data.message,
+      payload: errorMessage,
     });
+    return { success: false, error: errorMessage };
   }
 }; 

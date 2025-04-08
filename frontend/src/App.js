@@ -173,7 +173,14 @@ const App = () => {
 
               {/* Shop Routes */}
               {isSeller ? (
-                <Route path="/shop/*" element={<ShopRoutes />} />
+                <Route
+                  path="/dashboard/*"
+                  element={
+                    <SellerProtectedRoute>
+                      <ShopRoutes />
+                    </SellerProtectedRoute>
+                  }
+                />
               ) : null}
 
               {/* Admin Routes */}
