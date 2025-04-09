@@ -4,8 +4,9 @@ import { BiMessageSquareDetail } from 'react-icons/bi'
 import { FiPackage, FiShoppingBag } from 'react-icons/fi'
 import { MdOutlineLocalOffer } from 'react-icons/md'
 import { useSelector, useDispatch } from 'react-redux'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { markAsRead, markAllAsRead, setNotifications, setLoading, setError } from '../../redux/reducers/notificationSlice'
+import { logout } from '../../redux/reducers/userSlice'
 import axios from 'axios'
 import server from '../../server'
 import logo from '../../assets/logo.png'
@@ -13,6 +14,7 @@ import { toast } from 'react-toastify'
 
 const AdminHeader = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { user } = useSelector((state) => state.user);
   const { notifications, unreadCount, loading } = useSelector((state) => state.notification);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -62,16 +64,15 @@ const AdminHeader = () => {
     }
   };
 
-  const logoutHandler = () => {
-    axios
-      .get(`${server}/user/logout`, { withCredentials: true })
-      .then((res) => {
-        toast.success("Logged out successfully!");
-        window.location.href = "/admin-login";
-      })
-      .catch((error) => {
-        toast.error(error.response?.data?.message || "Logout failed");
-      });
+  const logoutHandler = async () => {
+    try {
+      await axios.get(`${server}/user/logout`, { withCredentials: true });
+      dispatch(logout());
+      toast.success("Logged out successfully!");
+      navigate("/admin-login");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Logout failed");
+    }
   };
 
   return (

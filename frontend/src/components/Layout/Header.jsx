@@ -6,6 +6,7 @@ import {
   AiOutlineSearch,
   AiOutlineShoppingCart,
   AiOutlineLogin,
+  AiOutlineUser,
 } from "react-icons/ai";
 import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io";
 import { BiMenuAltLeft } from "react-icons/bi";
@@ -16,11 +17,12 @@ import Navbar from "./Navbar";
 import Cart from "../cart/Cart";
 import Wishlist from "../Wishlist/Wishlist";
 import { RxCross1 } from "react-icons/rx";
-import { FiShoppingBag } from "react-icons/fi";
+import { FiShoppingBag, FiLogOut } from "react-icons/fi";
 import axios from "axios";
 import server from "../../server";
 import { toast } from "react-toastify";
 import logo from '../../assets/logo.png';
+import { logout } from "../../redux/reducers/userSlice";
 
 // Define the server URL
 const SERVER_URL = "http://localhost:8000"; // or your actual server URL
@@ -39,7 +41,7 @@ const Header = ({ activeHeading }) => {
   const [openCart, setOpenCart] = useState(false);
   const [openWishlist, setOpenWishlist] = useState(false);
   const [open, setOpen] = useState(false);
-  const [userDropdown, setUserDropdown] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const dispatch = useDispatch();
 
   // Add debug logging for authentication state
@@ -69,23 +71,15 @@ const Header = ({ activeHeading }) => {
     return "/shop-create";
   };
 
-  const logoutHandler = () => {
-    dispatch({ type: "LogoutRequest" });
-    axios
-      .get(`${server}/user/logout`, { withCredentials: true })
-      .then((res) => {
-        dispatch({ type: "LogoutSuccess" });
-        toast.success("Logged out successfully!");
-        window.location.href = "/login";
-      })
-      .catch((error) => {
-        console.error("Logout error:", error);
-        dispatch({
-          type: "LogoutFail",
-          payload: error.response?.data?.message || "Logout failed",
-        });
-        toast.error(error.response?.data?.message || "Logout failed");
-      });
+  const logoutHandler = async () => {
+    try {
+      await axios.get(`${server}/user/logout`, { withCredentials: true });
+      dispatch(logout());
+      toast.success("Logged out successfully!");
+      navigate("/login");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Logout failed");
+    }
   };
 
   window.addEventListener("scroll", () => {
@@ -235,7 +229,7 @@ const Header = ({ activeHeading }) => {
                     <div className="relative">
                       <div
                         className="flex items-center cursor-pointer"
-                        onClick={() => setUserDropdown(!userDropdown)}
+                        onClick={() => setShowProfile(!showProfile)}
                       >
                         <img
                           src={user?.avatar?.url}
@@ -248,12 +242,12 @@ const Header = ({ activeHeading }) => {
                         />
                       </div>
                       {/* User Dropdown Menu */}
-                      {userDropdown && (
+                      {showProfile && (
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
                           <Link
                             to="/profile"
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            onClick={() => setUserDropdown(false)}
+                            onClick={() => setShowProfile(false)}
                           >
                             Profile
                           </Link>
@@ -261,27 +255,43 @@ const Header = ({ activeHeading }) => {
                             <Link
                               to="/admin/dashboard"
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              onClick={() => setUserDropdown(false)}
+                              onClick={() => setShowProfile(false)}
                             >
                               Admin Dashboard
                             </Link>
                           )}
+                          <Link
+                            to="/orders"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setShowProfile(false)}
+                          >
+                            Your Orders
+                          </Link>
                           <button
-                            onClick={() => {
-                              setUserDropdown(false);
-                              logoutHandler();
-                            }}
+                            onClick={logoutHandler}
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
-                            Logout
+                            <FiLogOut className="mr-2" />
+                            Sign out
                           </button>
                         </div>
                       )}
                     </div>
                   ) : (
-                    <Link to="/login">
-                      <CgProfile size={25} className="text-gray-600" />
-                    </Link>
+                    <div className="flex items-center space-x-4">
+                      <Link
+                        to="/login"
+                        className="text-gray-700 hover:text-gray-900"
+                      >
+                        Sign in
+                      </Link>
+                      <Link
+                        to="/signup"
+                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                      >
+                        Sign up
+                      </Link>
+                    </div>
                   )}
                 </div>
               </div>
