@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { BiPackage, BiMoneyWithdraw } from 'react-icons/bi';
-import { FiPackage, FiSettings, FiMenu, FiX } from 'react-icons/fi';
+import { FiPackage, FiSettings, FiMenu, FiX, FiCreditCard } from 'react-icons/fi';
 import { MdOutlineLocalOffer, MdOutlineDashboard } from 'react-icons/md';
 import { BsGraphUp } from 'react-icons/bs';
 import { TbMessageCircle, TbDiscount } from 'react-icons/tb';
@@ -138,6 +138,11 @@ const ShopSidebar = () => {
                 </Link>
               );
             })}
+
+            <Link to="/shop/mpesa-settings" className="flex items-center p-3 hover:bg-gray-100 rounded-md">
+              <FiCreditCard className="mr-2" />
+              <span>M-Pesa Settings</span>
+            </Link>
           </div>
         </nav>
 

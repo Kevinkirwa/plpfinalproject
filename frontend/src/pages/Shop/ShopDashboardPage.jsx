@@ -116,9 +116,9 @@ const ShopDashboardPage = () => {
                 <p className="text-lg font-semibold text-gray-900">
                   {totalProducts}
                 </p>
-              </div>
             </div>
           </div>
+        </div>
 
           {/* All Orders */}
           <div className="p-6 bg-white rounded-lg shadow-sm">
@@ -163,10 +163,10 @@ const ShopDashboardPage = () => {
             </Link>
           </div>
           <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-            <div className="overflow-x-auto">
+          <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
+              <thead className="bg-gray-50">
+                <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Order ID
                     </th>
@@ -179,16 +179,16 @@ const ShopDashboardPage = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Date
                     </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
                   {orders && orders.length > 0 ? (
                     orders.slice(0, 5).map((order) => (
                       <tr key={order._id}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          #{order._id.slice(0, 8)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                      #{order._id.slice(0, 8)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                             order.status === "Delivered"
                               ? "bg-green-100 text-green-800"
@@ -196,16 +196,16 @@ const ShopDashboardPage = () => {
                               ? "bg-yellow-100 text-yellow-800"
                               : "bg-red-100 text-red-800"
                           }`}>
-                            {order.status}
-                          </span>
-                        </td>
+                        {order.status}
+                      </span>
+                    </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           ${order.totalPrice?.toFixed(2)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(order.createdAt).toLocaleDateString()}
-                        </td>
-                      </tr>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </td>
+                  </tr>
                     ))
                   ) : (
                     <tr>
@@ -214,8 +214,8 @@ const ShopDashboardPage = () => {
                       </td>
                     </tr>
                   )}
-                </tbody>
-              </table>
+              </tbody>
+            </table>
             </div>
           </div>
         </div>
@@ -243,7 +243,7 @@ const ShopDashboardPage = () => {
             >
               <div className="p-3 bg-purple-100 rounded-full">
                 <FiShoppingBag className="w-6 h-6 text-purple-600" />
-              </div>
+          </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-900">View Orders</p>
                 <p className="text-xs text-gray-500">Check your pending orders</p>
@@ -256,7 +256,7 @@ const ShopDashboardPage = () => {
             >
               <div className="p-3 bg-green-100 rounded-full">
                 <AiOutlineMoneyCollect className="w-6 h-6 text-green-600" />
-              </div>
+                </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-900">Withdraw Money</p>
                 <p className="text-xs text-gray-500">Transfer your earnings</p>

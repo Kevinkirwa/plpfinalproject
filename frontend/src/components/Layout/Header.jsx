@@ -70,32 +70,22 @@ const Header = ({ activeHeading }) => {
   };
 
   const logoutHandler = () => {
-    try {
-      dispatch({ type: "LogoutRequest" });
-      axios
-        .get(`${server}/user/logout`, { withCredentials: true })
-        .then((res) => {
-          dispatch({ type: "LogoutSuccess" });
-          toast.success(res.data.message);
-          navigate("/login");
-          window.location.reload(true);
-        })
-        .catch((error) => {
-          console.error("Logout error:", error);
-          dispatch({
-            type: "LogoutFail",
-            payload: error.response?.data?.message || "Logout failed"
-          });
-          toast.error(error.response?.data?.message || "Logout failed");
+    dispatch({ type: "LogoutRequest" });
+    axios
+      .get(`${server}/user/logout`, { withCredentials: true })
+      .then((res) => {
+        dispatch({ type: "LogoutSuccess" });
+        toast.success("Logged out successfully!");
+        window.location.href = "/login";
+      })
+      .catch((error) => {
+        console.error("Logout error:", error);
+        dispatch({
+          type: "LogoutFail",
+          payload: error.response?.data?.message || "Logout failed",
         });
-    } catch (error) {
-      console.error("Logout error:", error);
-      dispatch({
-        type: "LogoutFail",
-        payload: error.message
+        toast.error(error.response?.data?.message || "Logout failed");
       });
-      toast.error(error.message);
-    }
   };
 
   window.addEventListener("scroll", () => {

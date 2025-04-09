@@ -9,6 +9,7 @@ import { markAsRead, markAllAsRead, setNotifications, setLoading, setError } fro
 import axios from 'axios'
 import server from '../../server'
 import logo from '../../assets/logo.png'
+import { toast } from 'react-hot-toast'
 
 const AdminHeader = () => {
   const dispatch = useDispatch();
@@ -59,6 +60,18 @@ const AdminHeader = () => {
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }
+  };
+
+  const logoutHandler = () => {
+    axios
+      .get(`${server}/user/logout`, { withCredentials: true })
+      .then((res) => {
+        toast.success("Logged out successfully!");
+        window.location.href = "/admin-login";
+      })
+      .catch((error) => {
+        toast.error(error.response?.data?.message || "Logout failed");
+      });
   };
 
   return (
@@ -223,10 +236,7 @@ const AdminHeader = () => {
                   Settings
                 </Link>
                 <button
-                  onClick={() => {
-                    setShowProfile(false);
-                    // Add logout handler here
-                  }}
+                  onClick={logoutHandler}
                   className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   Sign out

@@ -140,7 +140,7 @@ const ShopPreviewPage = () => {
               </div>
             </div>
           </div>
-        </div>
+         </div>
 
         {/* Navigation Tabs */}
         <div className="mt-8 border-b border-gray-200">
@@ -292,7 +292,7 @@ const ShopPreviewPage = () => {
             </div>
           )}
         </div>
-      </div>
+    </div>
     </ShopLayout>
   );
 };
