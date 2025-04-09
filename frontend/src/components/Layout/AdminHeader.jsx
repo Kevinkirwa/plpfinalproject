@@ -9,7 +9,7 @@ import { markAsRead, markAllAsRead, setNotifications, setLoading, setError } fro
 import axios from 'axios'
 import server from '../../server'
 import logo from '../../assets/logo.png'
-import { toast } from 'react-hot-toast'
+import { toast } from 'react-toastify'
 
 const AdminHeader = () => {
   const dispatch = useDispatch();
