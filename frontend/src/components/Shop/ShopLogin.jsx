@@ -16,6 +16,8 @@ const ShopLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      dispatch({ type: "LoadSellerRequest" });
+      
       const response = await server.post(
         `/shop/login-shop`,
         {
@@ -26,12 +28,22 @@ const ShopLogin = () => {
 
       if (response.data.success) {
         localStorage.setItem("seller_token", response.data.token);
-        await dispatch(loadSeller());
+        localStorage.setItem("seller", JSON.stringify(response.data.seller));
+        
+        dispatch({
+          type: "LoadSellerSuccess",
+          payload: response.data.seller,
+        });
+        
         toast.success("Login successful!");
         navigate("/dashboard");
       }
     } catch (error) {
       console.error("Shop login error:", error);
+      dispatch({
+        type: "LoadSellerFail",
+        payload: error.response?.data?.message || "Login failed",
+      });
       toast.error(error.response?.data?.message || "Login failed");
     }
   };

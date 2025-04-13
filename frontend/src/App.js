@@ -64,38 +64,32 @@ const App = () => {
     const loadInitialData = async () => {
       try {
         initializeSocket();
-        await Promise.all([
+        
+        // Load products and events in parallel
+        const productsEventsPromise = Promise.all([
           store.dispatch(getAllProducts()),
           store.dispatch(getAllEvents())
         ]);
 
+        // Check for tokens and load auth state
         const token = localStorage.getItem('token');
+        const sellerToken = localStorage.getItem('seller_token');
+        
+        // Load auth state in parallel
+        const authPromises = [];
         if (token) {
-          try {
-            const [userResult, sellerResult] = await Promise.allSettled([
-              store.dispatch(loadUser()),
-              store.dispatch(loadSeller())
-            ]);
-
-            console.log('User load result:', userResult);
-            console.log('Seller load result:', sellerResult);
-
-            if (userResult.status === 'rejected') {
-              console.error('Error loading user:', userResult.reason);
-              if (userResult.reason.response?.status === 401) {
-                localStorage.removeItem('token');
-              }
-            }
-            if (sellerResult.status === 'rejected') {
-              console.error('Error loading seller:', sellerResult.reason);
-            }
-          } catch (error) {
-            console.error('Error in auth data loading:', error);
-            if (error.response?.status === 401) {
-              localStorage.removeItem('token');
-            }
-          }
+          authPromises.push(store.dispatch(loadUser()));
         }
+        if (sellerToken) {
+          authPromises.push(store.dispatch(loadSeller()));
+        }
+
+        // Wait for all promises to settle
+        await Promise.allSettled([
+          productsEventsPromise,
+          ...authPromises
+        ]);
+
       } catch (error) {
         console.error("Error loading initial data:", error);
       } finally {

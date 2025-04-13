@@ -4,38 +4,54 @@ import server from "../../server";
 // load seller
 export const loadSeller = () => async (dispatch) => {
   try {
-    dispatch({ type: "LoadSellerRequest" });
-    
-    // Get the seller token
+    dispatch({
+      type: "LoadSellerRequest",
+    });
+
     const token = localStorage.getItem('seller_token');
     if (!token) {
       throw new Error('No seller token found');
     }
 
-    // Make the request with the token
-    const { data } = await server.get(`/shop/getSeller`, {
+    // First try to get from localStorage for immediate state update
+    const cachedSeller = localStorage.getItem('seller');
+    if (cachedSeller) {
+      dispatch({
+        type: "LoadSellerSuccess",
+        payload: JSON.parse(cachedSeller),
+      });
+    }
+
+    // Then verify with server
+    const { data } = await server.get("/shop/getSeller", {
       headers: {
         Authorization: `Bearer ${token}`
       }
     });
     
-    if (data.success && data.seller) {
-      dispatch({ type: "LoadSellerSuccess", payload: data.seller });
+    if (data?.success && data?.seller) {
+      // Update localStorage and state with fresh data
+      localStorage.setItem('seller', JSON.stringify(data.seller));
+      dispatch({
+        type: "LoadSellerSuccess",
+        payload: data.seller,
+      });
       return { success: true, seller: data.seller };
     } else {
       throw new Error('Invalid seller data received');
     }
   } catch (error) {
-    const errorMessage = error.response?.data?.message || error.message || "Failed to load seller";
-    dispatch({
-      type: "LoadSellerFail",
-      payload: errorMessage,
-    });
-    // Clear invalid token
+    console.error('Error loading seller:', error);
     if (error.response?.status === 401) {
       localStorage.removeItem('seller_token');
+      localStorage.removeItem('seller');
     }
-    return { success: false, error: errorMessage };
+    
+    dispatch({
+      type: "LoadSellerFail",
+      payload: error.response?.data?.message || error.message,
+    });
+    return { success: false, error: error.response?.data?.message || error.message };
   }
 };
 
