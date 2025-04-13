@@ -71,4 +71,26 @@ export const getAllSellers = () => async (dispatch) => {
     });
     return { success: false, error: errorMessage };
   }
+};
+
+// Logout seller
+export const logoutSeller = () => async (dispatch) => {
+  try {
+    dispatch({
+      type: "logoutSellerRequest",
+    });
+
+    const { data } = await axios.get(`${server}/shop/logout`, {
+      withCredentials: true,
+    });
+
+    dispatch({
+      type: "logoutSellerSuccess",
+    });
+  } catch (error) {
+    dispatch({
+      type: "logoutSellerFail",
+      payload: error.response?.data?.message || "Logout failed",
+    });
+  }
 }; 
