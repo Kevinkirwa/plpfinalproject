@@ -47,7 +47,7 @@ const ShopLayout = ({ children }) => {
             </Link>
 
             <Link
-              to="/dashboard-orders"
+              to="/dashboard/orders"
               className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <BiPackage size={20} />
@@ -55,7 +55,7 @@ const ShopLayout = ({ children }) => {
             </Link>
 
             <Link
-              to="/dashboard-products"
+              to="/dashboard/products"
               className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <FiPackage size={20} />
@@ -63,7 +63,7 @@ const ShopLayout = ({ children }) => {
             </Link>
 
             <Link
-              to="/dashboard-create-product"
+              to="/dashboard/create-product"
               className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <FiPackage size={20} />
@@ -71,7 +71,7 @@ const ShopLayout = ({ children }) => {
             </Link>
 
             <Link
-              to="/dashboard-events"
+              to="/dashboard/events"
               className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <MdOutlineLocalOffer size={20} />
@@ -79,7 +79,7 @@ const ShopLayout = ({ children }) => {
             </Link>
 
             <Link
-              to="/dashboard-create-event"
+              to="/dashboard/create-event"
               className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <MdOutlineLocalOffer size={20} />
@@ -87,7 +87,7 @@ const ShopLayout = ({ children }) => {
             </Link>
 
             <Link
-              to="/dashboard-withdraw-money"
+              to="/dashboard/withdraw-money"
               className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <BiMoneyWithdraw size={20} />
@@ -95,7 +95,7 @@ const ShopLayout = ({ children }) => {
             </Link>
 
             <Link
-              to="/dashboard-messages"
+              to="/dashboard/inbox"
               className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <TbMessageCircle size={20} />
@@ -103,7 +103,7 @@ const ShopLayout = ({ children }) => {
             </Link>
 
             <Link
-              to="/dashboard-settings"
+              to="/dashboard/settings"
               className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <FiSettings size={20} />

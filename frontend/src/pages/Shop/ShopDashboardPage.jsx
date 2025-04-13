@@ -263,7 +263,7 @@ const ShopDashboardPage = () => {
           <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Link
-              to="/dashboard-create-product"
+              to="/dashboard/create-product"
               className="flex items-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="p-3 bg-blue-100 rounded-full">
@@ -276,12 +276,12 @@ const ShopDashboardPage = () => {
             </Link>
 
             <Link
-              to="/dashboard-orders"
+              to="/dashboard/orders"
               className="flex items-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="p-3 bg-purple-100 rounded-full">
                 <FiShoppingBag className="w-6 h-6 text-purple-600" />
-          </div>
+              </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-900">View Orders</p>
                 <p className="text-xs text-gray-500">Check your pending orders</p>
@@ -289,12 +289,12 @@ const ShopDashboardPage = () => {
             </Link>
 
             <Link
-              to="/dashboard-withdraw-money"
+              to="/dashboard/withdraw-money"
               className="flex items-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="p-3 bg-green-100 rounded-full">
                 <AiOutlineMoneyCollect className="w-6 h-6 text-green-600" />
-                </div>
+              </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-900">Withdraw Money</p>
                 <p className="text-xs text-gray-500">Transfer your earnings</p>
