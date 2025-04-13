@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { AiOutlineArrowRight, AiOutlineMoneyCollect, AiOutlinePlus } from "react-icons/ai";
 import { MdOutlineLocalShipping } from "react-icons/md";
@@ -19,7 +20,9 @@ import { CgEventbrite } from "react-icons/cg";
 import ShopLayout from "../../components/Shop/ShopLayout";
 
 const ShopDashboardPage = () => {
-  const { seller } = useSelector((state) => state.seller);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { seller, isSeller, isLoading } = useSelector((state) => state.seller);
   const { products } = useSelector((state) => state.products);
   const { orders } = useSelector((state) => state.order);
   const [events, setEvents] = useState([]);
@@ -38,26 +41,50 @@ const ShopDashboardPage = () => {
   });
 
   useEffect(() => {
+    // Check authentication
+    if (!isSeller && !isLoading) {
+      navigate("/shop-login");
+      return;
+    }
+
     const fetchData = async () => {
       setLoading(true);
       try {
+        const token = localStorage.getItem('seller_token');
+        if (!token) {
+          throw new Error('No seller token found');
+        }
+
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        };
+
         const [ordersData, productsData, eventsData] = await Promise.all([
-          axios.get(`${server}/order/get-seller-orders/${seller._id}`),
-          axios.get(`${server}/product/get-seller-products/${seller._id}`),
-          axios.get(`${server}/event/get-seller-events/${seller._id}`),
+          axios.get(`${server}/order/get-seller-orders/${seller?._id}`, config),
+          axios.get(`${server}/product/get-seller-products/${seller?._id}`, config),
+          axios.get(`${server}/event/get-seller-events/${seller?._id}`, config)
         ]);
 
-        setOrders(ordersData.data.orders || []);
-        setProducts(productsData.data.products || []);
-        setEvents(eventsData.data.events || []);
+        if (ordersData.data?.orders) setOrders(ordersData.data.orders);
+        if (productsData.data?.products) setProducts(productsData.data.products);
+        if (eventsData.data?.events) setEvents(eventsData.data.events);
       } catch (error) {
-        toast.error(error.response?.data?.message || "Error fetching data");
+        console.error("Dashboard data fetch error:", error);
+        if (error.response?.status === 401) {
+          localStorage.removeItem('seller_token');
+          navigate("/shop-login");
+        }
+        toast.error(error.response?.data?.message || "Error fetching dashboard data");
       }
       setLoading(false);
     };
 
-    fetchData();
-  }, [seller._id]);
+    if (seller?._id) {
+      fetchData();
+    }
+  }, [seller?._id, isSeller, isLoading, navigate]);
 
   // Calculate statistics
   const totalEarnings = orders.reduce((acc, order) => acc + order.totalPrice, 0);
@@ -71,8 +98,12 @@ const ShopDashboardPage = () => {
   const pendingRefunds = refunds.filter(order => order.status === "Processing refund").length;
   const pendingWithdrawals = withdrawals.filter(w => w.status === "pending").length;
 
-  if (loading) {
+  if (isLoading || loading) {
     return <Loader />;
+  }
+
+  if (!isSeller) {
+    return null;
   }
 
   return (
