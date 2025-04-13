@@ -23,14 +23,19 @@ const ShopDashboardPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { seller, isSeller, isLoading } = useSelector((state) => state.seller);
-  const { products } = useSelector((state) => state.products);
-  const { orders } = useSelector((state) => state.order);
+  const { products = [] } = useSelector((state) => state.products || {});
+  const { orders = [] } = useSelector((state) => state.order || {});
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [timeRange, setTimeRange] = useState("week");
   const [messages, setMessages] = useState([]);
   const [refunds, setRefunds] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
+  const [dashboardData, setDashboardData] = useState({
+    orders: [],
+    products: [],
+    events: []
+  });
   const [analytics, setAnalytics] = useState({
     totalSales: 0,
     totalOrders: 0,
@@ -67,9 +72,11 @@ const ShopDashboardPage = () => {
           axios.get(`${server}/event/get-seller-events/${seller?._id}`, config)
         ]);
 
-        if (ordersData.data?.orders) setOrders(ordersData.data.orders);
-        if (productsData.data?.products) setProducts(productsData.data.products);
-        if (eventsData.data?.events) setEvents(eventsData.data.events);
+        setDashboardData({
+          orders: ordersData.data?.orders || [],
+          products: productsData.data?.products || [],
+          events: eventsData.data?.events || []
+        });
       } catch (error) {
         console.error("Dashboard data fetch error:", error);
         if (error.response?.status === 401) {
@@ -86,17 +93,17 @@ const ShopDashboardPage = () => {
     }
   }, [seller?._id, isSeller, isLoading, navigate]);
 
-  // Calculate statistics
-  const totalEarnings = orders.reduce((acc, order) => acc + order.totalPrice, 0);
-  const totalOrders = orders.length;
-  const totalProducts = products.length;
-  const pendingOrders = orders.filter(order => order.status === "Processing").length;
-  const deliveredOrders = orders.filter(order => order.status === "Delivered").length;
-  const shippingOrders = orders.filter(order => order.status === "Shipping").length;
-  const totalEvents = events.length;
-  const unreadMessages = messages.filter(msg => !msg.read).length;
-  const pendingRefunds = refunds.filter(order => order.status === "Processing refund").length;
-  const pendingWithdrawals = withdrawals.filter(w => w.status === "pending").length;
+  // Calculate statistics safely
+  const totalEarnings = (dashboardData.orders || []).reduce((acc, order) => acc + (order.totalPrice || 0), 0);
+  const totalOrders = (dashboardData.orders || []).length;
+  const totalProducts = (dashboardData.products || []).length;
+  const pendingOrders = (dashboardData.orders || []).filter(order => order.status === "Processing").length;
+  const deliveredOrders = (dashboardData.orders || []).filter(order => order.status === "Delivered").length;
+  const shippingOrders = (dashboardData.orders || []).filter(order => order.status === "Shipping").length;
+  const totalEvents = (dashboardData.events || []).length;
+  const unreadMessages = (messages || []).filter(msg => !msg.read).length;
+  const pendingRefunds = (refunds || []).filter(order => order.status === "Processing refund").length;
+  const pendingWithdrawals = (withdrawals || []).filter(w => w.status === "pending").length;
 
   if (isLoading || loading) {
     return <Loader />;
@@ -213,8 +220,8 @@ const ShopDashboardPage = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                  {orders && orders.length > 0 ? (
-                    orders.slice(0, 5).map((order) => (
+                  {dashboardData.orders && dashboardData.orders.length > 0 ? (
+                    dashboardData.orders.slice(0, 5).map((order) => (
                       <tr key={order._id}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       #{order._id.slice(0, 8)}
