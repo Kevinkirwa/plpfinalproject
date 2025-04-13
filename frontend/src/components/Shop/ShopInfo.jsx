@@ -33,13 +33,31 @@ const ShopInfo = ({ isOwner }) => {
 
   const logoutHandler = async () => {
     try {
+      // Get the seller token
+      const token = localStorage.getItem('seller_token');
+      
+      // Call logout endpoint with proper authorization
       await axios.get(`${server}/shop/logout`, {
-        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
+
+      // Clear all tokens and state
+      localStorage.removeItem('seller_token');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Clear Redux state
       dispatch(logout());
+      
       toast.success("Logged out successfully!");
       navigate("/shop-login");
+      
+      // Force a page reload to clear any cached state
+      window.location.reload();
     } catch (error) {
+      console.error("Logout error:", error);
       toast.error(error.response?.data?.message || "Logout failed");
     }
   };

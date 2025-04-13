@@ -66,11 +66,32 @@ const AdminHeader = () => {
 
   const logoutHandler = async () => {
     try {
-      await axios.get(`${server}/user/logout`, { withCredentials: true });
+      // Get the token from localStorage
+      const token = localStorage.getItem('token');
+      
+      // Call logout endpoint with proper authorization
+      await axios.get(`${server}/user/logout`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      // Clear all tokens and state
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('seller_token');
+      
+      // Clear Redux state
+      dispatch(setNotifications([]));
       dispatch(logout());
+      
       toast.success("Logged out successfully!");
       navigate("/admin-login");
+      
+      // Force a page reload to clear any cached state
+      window.location.reload();
     } catch (error) {
+      console.error("Logout error:", error);
       toast.error(error.response?.data?.message || "Logout failed");
     }
   };

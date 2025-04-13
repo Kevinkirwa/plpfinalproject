@@ -28,11 +28,10 @@ import { logout } from "../../redux/reducers/userSlice";
 const SERVER_URL = "http://localhost:8000"; // or your actual server URL
 
 const Header = ({ activeHeading }) => {
-  const navigate = useNavigate();
-  const { isAuthenticated, user } = useSelector((state) => state.user);
+  const { user, isAuthenticated } = useSelector((state) => state.user);
+  const { cart } = useSelector((state) => state.cart);
   const { isSeller } = useSelector((state) => state.seller);
   const { wishlist } = useSelector((state) => state.wishlist);
-  const { cart } = useSelector((state) => state.cart);
   const { allProducts } = useSelector((state) => state.products);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchData, setSearchData] = useState(null);
@@ -43,6 +42,7 @@ const Header = ({ activeHeading }) => {
   const [open, setOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   // Add debug logging for authentication state
   useEffect(() => {
@@ -74,9 +74,17 @@ const Header = ({ activeHeading }) => {
   const logoutHandler = async () => {
     try {
       await axios.get(`${server}/user/logout`, { withCredentials: true });
+      // Clear cart state
+      dispatch({ type: "clearCart" });
+      // Clear user state
       dispatch(logout());
+      // Clear localStorage
+      localStorage.removeItem('user');
+      localStorage.removeItem('cart');
       toast.success("Logged out successfully!");
       navigate("/login");
+      // Force a page reload to clear any cached state
+      window.location.reload();
     } catch (error) {
       toast.error(error.response?.data?.message || "Logout failed");
     }

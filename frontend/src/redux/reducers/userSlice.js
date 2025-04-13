@@ -1,15 +1,19 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const initialState = {
-  isAuthenticated: false,
-  user: null,
-  loading: false,
-  error: null,
+// Get initial state from localStorage if available
+const getInitialState = () => {
+  const storedUser = localStorage.getItem('user');
+  return {
+    isAuthenticated: !!storedUser,
+    user: storedUser ? JSON.parse(storedUser) : null,
+    loading: false,
+    error: null,
+  };
 };
 
 const userSlice = createSlice({
   name: "user",
-  initialState,
+  initialState: getInitialState(),
   reducers: {
     loginRequest: (state) => {
       state.loading = true;
@@ -19,6 +23,8 @@ const userSlice = createSlice({
       state.user = action.payload;
       state.loading = false;
       state.error = null;
+      // Store user in localStorage
+      localStorage.setItem('user', JSON.stringify(action.payload));
     },
     loginFail: (state, action) => {
       state.loading = false;
@@ -29,6 +35,8 @@ const userSlice = createSlice({
       state.user = null;
       state.loading = false;
       state.error = null;
+      // Clear user from localStorage
+      localStorage.removeItem('user');
     },
     clearError: (state) => {
       state.error = null;
