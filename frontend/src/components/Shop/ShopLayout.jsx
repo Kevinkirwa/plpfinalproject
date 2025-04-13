@@ -1,14 +1,22 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
-import { Link, Outlet } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { BiPackage, BiMoneyWithdraw } from 'react-icons/bi';
-import { FiPackage, FiSettings } from 'react-icons/fi';
+import { FiPackage, FiSettings, FiLogOut } from 'react-icons/fi';
 import { MdOutlineLocalOffer } from 'react-icons/md';
 import { BsGraphUp } from 'react-icons/bs';
 import { TbMessageCircle } from 'react-icons/tb';
+import { logoutSeller } from '../../redux/actions/seller';
 
 const ShopLayout = () => {
   const { seller } = useSelector((state) => state.seller);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    dispatch(logoutSeller());
+    navigate('/');
+  };
 
   return (
     <div className="min-h-screen bg-[#f3f6ff]">
@@ -30,6 +38,13 @@ const ShopLayout = () => {
                 {seller?.name || 'Seller'}
               </span>
             </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-md"
+            >
+              <FiLogOut size={20} />
+              <span>Logout</span>
+            </button>
           </div>
         </div>
       </div>
@@ -47,7 +62,7 @@ const ShopLayout = () => {
             </Link>
 
             <Link
-              to="orders"
+              to="/dashboard/orders"
               className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <BiPackage size={20} />
@@ -55,7 +70,7 @@ const ShopLayout = () => {
             </Link>
 
             <Link
-              to="products"
+              to="/dashboard/products"
               className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <FiPackage size={20} />
@@ -63,7 +78,7 @@ const ShopLayout = () => {
             </Link>
 
             <Link
-              to="create-product"
+              to="/dashboard/create-product"
               className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <FiPackage size={20} />
@@ -71,7 +86,7 @@ const ShopLayout = () => {
             </Link>
 
             <Link
-              to="events"
+              to="/dashboard/events"
               className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <MdOutlineLocalOffer size={20} />
@@ -79,7 +94,7 @@ const ShopLayout = () => {
             </Link>
 
             <Link
-              to="create-event"
+              to="/dashboard/create-event"
               className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <MdOutlineLocalOffer size={20} />
@@ -87,7 +102,7 @@ const ShopLayout = () => {
             </Link>
 
             <Link
-              to="withdraw-money"
+              to="/dashboard/withdraw-money"
               className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <BiMoneyWithdraw size={20} />
@@ -95,7 +110,7 @@ const ShopLayout = () => {
             </Link>
 
             <Link
-              to="inbox"
+              to="/dashboard/inbox"
               className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <TbMessageCircle size={20} />
@@ -103,7 +118,7 @@ const ShopLayout = () => {
             </Link>
 
             <Link
-              to="settings"
+              to="/dashboard/settings"
               className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <FiSettings size={20} />
@@ -113,7 +128,7 @@ const ShopLayout = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1">
+        <div className="flex-1 p-6">
           <Outlet />
         </div>
       </div>
