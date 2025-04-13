@@ -1,13 +1,13 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, Outlet } from 'react-router-dom';
 import { BiPackage, BiMoneyWithdraw } from 'react-icons/bi';
 import { FiPackage, FiSettings } from 'react-icons/fi';
 import { MdOutlineLocalOffer } from 'react-icons/md';
 import { BsGraphUp } from 'react-icons/bs';
 import { TbMessageCircle } from 'react-icons/tb';
 
-const ShopLayout = ({ children }) => {
+const ShopLayout = () => {
   const { seller } = useSelector((state) => state.seller);
 
   return (
@@ -113,8 +113,8 @@ const ShopLayout = ({ children }) => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 p-8">
-          {children}
+        <div className="flex-1">
+          <Outlet />
         </div>
       </div>
     </div>
